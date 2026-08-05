@@ -1,0 +1,117 @@
+version: 1
+generated_by: logos.manifest.generate
+git_sha: 582b97b28e70001995ef66f1b31b0f8b3215c5f0
+phase: p3
+meta:
+  phase: p3
+  goal: 'RQ4: predict 1B before training it, then train and check'
+  prediction_protocol: freeze fitted law + commit predictions before launch
+runs:
+- run_id: 1b-1.58-tp20-s0
+  phase: p3
+  size: 1b
+  precision: '1.58'
+  tokens_per_param: 20.0
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: null
+  total_tokens: null
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - extrapolation_anchor
+  est_gpu_hours: 110.91520298337068
+  est_cost_usd: 310.5625683534379
+  max_wall_clock_mult: 3.0
+  notes: ''
+- run_id: 1b-1.58-tp80-s0
+  phase: p3
+  size: 1b
+  precision: '1.58'
+  tokens_per_param: 80.0
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: null
+  total_tokens: null
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - extrapolation_anchor
+  est_gpu_hours: 443.6608119334827
+  est_cost_usd: 1242.2502734137515
+  max_wall_clock_mult: 3.0
+  notes: ''
+- run_id: 1b-4-tp20-s0
+  phase: p3
+  size: 1b
+  precision: '4'
+  tokens_per_param: 20.0
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: null
+  total_tokens: null
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - extrapolation_anchor
+  est_gpu_hours: 110.91520298337068
+  est_cost_usd: 310.5625683534379
+  max_wall_clock_mult: 3.0
+  notes: ''
+- run_id: 1b-4-tp80-s0
+  phase: p3
+  size: 1b
+  precision: '4'
+  tokens_per_param: 80.0
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: null
+  total_tokens: null
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - extrapolation_anchor
+  est_gpu_hours: 443.6608119334827
+  est_cost_usd: 1242.2502734137515
+  max_wall_clock_mult: 3.0
+  notes: ''
+- run_id: 1b-bf16-tp20-s0
+  phase: p3
+  size: 1b
+  precision: bf16
+  tokens_per_param: 20.0
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: null
+  total_tokens: null
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - extrapolation_anchor
+  est_gpu_hours: 87.56463393424
+  est_cost_usd: 245.180975015872
+  max_wall_clock_mult: 3.0
+  notes: ''
+- run_id: 1b-bf16-tp80-s0
+  phase: p3
+  size: 1b
+  precision: bf16
+  tokens_per_param: 80.0
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: null
+  total_tokens: null
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - extrapolation_anchor
+  est_gpu_hours: 350.25853573696
+  est_cost_usd: 980.723900063488
+  max_wall_clock_mult: 3.0
+  notes: ''

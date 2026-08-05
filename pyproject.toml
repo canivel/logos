@@ -1,0 +1,46 @@
+[project]
+name = "logos"
+version = "0.1.0"
+description = "LOGOS: memory-optimal scaling laws for natively low-bit LLMs (TRIT model suite)"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Danilo Canivel", email = "d.canivel@gmail.com" }]
+dependencies = [
+    "torch>=2.4",
+    "numpy>=1.26",
+    "scipy>=1.11",
+    "transformers>=4.44",
+    "tokenizers>=0.19",
+    "datasets>=2.20",
+    "safetensors>=0.4",
+    "pyyaml>=6.0",
+    "huggingface-hub>=0.24",
+    "pandas>=2.0",
+    "matplotlib>=3.8",
+]
+
+[project.optional-dependencies]
+tracking = ["wandb>=0.17"]
+export = ["gguf>=0.10"]
+evalsuite = ["lm-eval==0.4.9"]
+dev = ["pytest>=8.0", "pytest-timeout>=2.3"]
+
+[project.scripts]
+logos = "logos.cli:main"
+logos-validate = "validation.panel:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/logos", "validation"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.uv]
+# Local dev on the 5090/3080 box uses the system torch (cu128). RunPod images
+# install torch from the CUDA index; see docker/ notes.

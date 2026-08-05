@@ -1,0 +1,84 @@
+# GEPA router config for the LOGOS ops layer (PLAN.md s13).
+#
+# Principle: "cheap local models handle the always-on monitoring loop while
+# cloud models handle judgment calls (triage, anomaly explanation)". The
+# control plane is the user's 5090 box; local routes hit ollama (or a vLLM
+# endpoint) on that box, cloud routes hit the Anthropic API via the NATIVE
+# `anthropic` SDK. No litellm anywhere -- it is banned in this project.
+#
+# Providers use native SDK names only:
+#   ollama    -> local ollama server on the 5090 (http://localhost:11434)
+#   anthropic -> official `anthropic` Python SDK, reads ANTHROPIC_API_KEY
+
+router: gepa
+
+providers:
+  local:
+    provider: ollama                 # native ollama client, no litellm
+    base_url: http://localhost:11434
+    model: qwen3:8b                  # fits the 5090; any small instruct model works
+  local_vllm:                        # optional alternative local backend
+    provider: openai_compatible_vllm # vLLM's own server on the 5090
+    base_url: http://localhost:8000/v1
+    model: Qwen/Qwen3-8B
+  cloud:
+    provider: anthropic              # native `anthropic` SDK (ANTHROPIC_API_KEY)
+    model: claude-sonnet-5           # judgment calls only; not the monitor loop
+
+routes:
+  # ---- Tier 1 (Monitor, from P0): always-on loop, runs every few minutes.
+  # Pure classification ("is this metrics tail NaN / diverged / stalled?").
+  # Must be free-ish and local; a wrong answer costs one wasted restart.
+  monitor_classify:
+    tier: 1
+    target: local
+    fallback: local_vllm             # never falls through to cloud: the loop
+    max_seconds: 30                  # is too chatty to pay per-token for
+    retries: 2
+
+  # ---- Tier 1/2: anomaly explanation. Fires rarely (a run went nan or
+  # diverged) and a human reads the output, so it earns a cloud call.
+  anomaly_explain:
+    tier: 1
+    target: cloud
+    fallback: local                  # degrade to the local model if the API
+    max_seconds: 120                 # is down; an alert still goes out
+    retries: 1
+
+  # ---- Tier 2 (Eval & hygiene, from P2): summarize eval results + kill-
+  # criterion audit notes. Judgment-adjacent but templated; local first.
+  eval_summary:
+    tier: 2
+    target: local
+    fallback: cloud
+    max_seconds: 60
+    retries: 2
+
+  # ---- Tier 3 (Launcher, earned): the launcher itself makes NO model
+  # calls for decisions -- caps are hard-coded in ops/kaos/tools.py and the
+  # BudgetLedger. This route only phrases the human-readable approval
+  # request / alert text.
+  launch_notice:
+    tier: 3
+    target: local
+    fallback: cloud
+    max_seconds: 30
+    retries: 1
+
+  # ---- Sidecar (PLAN.md s14/s15): daily arXiv scoop-triage digest.
+  # One call per day, quality matters (a missed scoop is expensive):
+  # cloud model, with the rule-based scorer in ops/arxiv_triage.py as the
+  # no-network fallback.
+  triage_digest:
+    tier: 2
+    target: cloud
+    fallback: local
+    max_seconds: 180
+    retries: 1
+
+limits:
+  # wall-clock ceilings so a wedged route can never block the monitor loop
+  route_default_max_seconds: 60
+  daily_cloud_calls_max: 50          # the monitor loop must stay local; if
+                                     # cloud volume grows, something is wrong
+  daily_cloud_usd_max: 5.0

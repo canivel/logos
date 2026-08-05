@@ -1,0 +1,31 @@
+version: 1
+generated_by: logos.manifest.generate
+git_sha: 582b97b28e70001995ef66f1b31b0f8b3215c5f0
+phase: p5
+meta:
+  phase: p5
+  goal: 'RQ6: beat same-footprint baselines at the 2GB device class'
+  schedule: bitnet2stage + anneal + SFT/DPO (stages recorded in run notes)
+runs:
+- run_id: p5-1.5b-capstone
+  phase: p5
+  size: 1.5b
+  precision: '1.58'
+  tokens_per_param: 199.2009015992167
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: null
+  total_tokens: 300000000000
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - capstone
+  - tier_a
+  est_gpu_hours: 2537.946208291203
+  est_cost_usd: 7106.249383215369
+  max_wall_clock_mult: 3.0
+  notes: 'Full-quality recipe, not the grid recipe (PLAN.md s11): bitnet2stage two-stage
+    LR + weight-decay schedule; high-quality data anneal in the last 10-15%; then
+    SFT (~1-2B tokens open instruction data) and light DPO stages. Estimate covers
+    pretrain FLOPs; anneal/SFT/DPO/eval ride the phase budget headroom.'

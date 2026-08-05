@@ -1,0 +1,65 @@
+version: 1
+generated_by: logos.manifest.generate
+git_sha: 582b97b28e70001995ef66f1b31b0f8b3215c5f0
+phase: p2ext
+meta:
+  phase: p2ext
+  goal: 490m@320x anchors for the overtrained tier
+runs:
+- run_id: 490m-1.58-tp320-s0
+  phase: p2ext
+  size: 490m
+  precision: '1.58'
+  tokens_per_param: 320.0
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: null
+  total_tokens: null
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - grid
+  - extended_tier
+  est_gpu_hours: 430.6623323833277
+  est_cost_usd: 1205.8545306733174
+  max_wall_clock_mult: 3.0
+  notes: ''
+- run_id: 490m-4-tp320-s0
+  phase: p2ext
+  size: 490m
+  precision: '4'
+  tokens_per_param: 320.0
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: null
+  total_tokens: null
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - grid
+  - extended_tier
+  est_gpu_hours: 430.6623323833277
+  est_cost_usd: 1205.8545306733174
+  max_wall_clock_mult: 3.0
+  notes: ''
+- run_id: 490m-bf16-tp320-s0
+  phase: p2ext
+  size: 490m
+  precision: bf16
+  tokens_per_param: 320.0
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: null
+  total_tokens: null
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - grid
+  - extended_tier
+  est_gpu_hours: 339.996578197364
+  est_cost_usd: 951.990418952619
+  max_wall_clock_mult: 3.0
+  notes: ''

@@ -1,0 +1,816 @@
+version: 1
+generated_by: logos.manifest.generate
+git_sha: 582b97b28e70001995ef66f1b31b0f8b3215c5f0
+phase: p1
+meta:
+  phase: p1
+  goal: 'RQ2: gap-vs-overtraining curves; freeze LR rule and FFN choice'
+  reuse: gap_study run_ids are the 125m rows of p2.yaml (trained once, here)
+runs:
+- run_id: p1-lr-60m-1.58-m0.5
+  phase: p1
+  size: 60m
+  precision: '1.58'
+  tokens_per_param: 16.814092630853995
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: 0.5
+  total_tokens: 1000000000
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - lr_probe
+  est_gpu_hours: 0.33408560835861134
+  est_cost_usd: 0.9354397034041116
+  max_wall_clock_mult: 3.0
+  notes: 'output: one LR rule per precision, frozen in manifests/lr_rules.yaml'
+- run_id: p1-lr-60m-1.58-m1
+  phase: p1
+  size: 60m
+  precision: '1.58'
+  tokens_per_param: 16.814092630853995
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: 1.0
+  total_tokens: 1000000000
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - lr_probe
+  est_gpu_hours: 0.33408560835861134
+  est_cost_usd: 0.9354397034041116
+  max_wall_clock_mult: 3.0
+  notes: 'output: one LR rule per precision, frozen in manifests/lr_rules.yaml'
+- run_id: p1-lr-60m-1.58-m2
+  phase: p1
+  size: 60m
+  precision: '1.58'
+  tokens_per_param: 16.814092630853995
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: 2.0
+  total_tokens: 1000000000
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - lr_probe
+  est_gpu_hours: 0.33408560835861134
+  est_cost_usd: 0.9354397034041116
+  max_wall_clock_mult: 3.0
+  notes: 'output: one LR rule per precision, frozen in manifests/lr_rules.yaml'
+- run_id: p1-lr-60m-1.58-m4
+  phase: p1
+  size: 60m
+  precision: '1.58'
+  tokens_per_param: 16.814092630853995
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: 4.0
+  total_tokens: 1000000000
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - lr_probe
+  est_gpu_hours: 0.33408560835861134
+  est_cost_usd: 0.9354397034041116
+  max_wall_clock_mult: 3.0
+  notes: 'output: one LR rule per precision, frozen in manifests/lr_rules.yaml'
+- run_id: p1-lr-60m-1.58-m8
+  phase: p1
+  size: 60m
+  precision: '1.58'
+  tokens_per_param: 16.814092630853995
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: 8.0
+  total_tokens: 1000000000
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - lr_probe
+  est_gpu_hours: 0.33408560835861134
+  est_cost_usd: 0.9354397034041116
+  max_wall_clock_mult: 3.0
+  notes: 'output: one LR rule per precision, frozen in manifests/lr_rules.yaml'
+- run_id: p1-lr-60m-2-m0.5
+  phase: p1
+  size: 60m
+  precision: '2'
+  tokens_per_param: 16.814092630853995
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: 0.5
+  total_tokens: 1000000000
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - lr_probe
+  est_gpu_hours: 0.33408560835861134
+  est_cost_usd: 0.9354397034041116
+  max_wall_clock_mult: 3.0
+  notes: 'output: one LR rule per precision, frozen in manifests/lr_rules.yaml'
+- run_id: p1-lr-60m-2-m1
+  phase: p1
+  size: 60m
+  precision: '2'
+  tokens_per_param: 16.814092630853995
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: 1.0
+  total_tokens: 1000000000
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - lr_probe
+  est_gpu_hours: 0.33408560835861134
+  est_cost_usd: 0.9354397034041116
+  max_wall_clock_mult: 3.0
+  notes: 'output: one LR rule per precision, frozen in manifests/lr_rules.yaml'
+- run_id: p1-lr-60m-2-m2
+  phase: p1
+  size: 60m
+  precision: '2'
+  tokens_per_param: 16.814092630853995
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: 2.0
+  total_tokens: 1000000000
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - lr_probe
+  est_gpu_hours: 0.33408560835861134
+  est_cost_usd: 0.9354397034041116
+  max_wall_clock_mult: 3.0
+  notes: 'output: one LR rule per precision, frozen in manifests/lr_rules.yaml'
+- run_id: p1-lr-60m-2-m4
+  phase: p1
+  size: 60m
+  precision: '2'
+  tokens_per_param: 16.814092630853995
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: 4.0
+  total_tokens: 1000000000
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - lr_probe
+  est_gpu_hours: 0.33408560835861134
+  est_cost_usd: 0.9354397034041116
+  max_wall_clock_mult: 3.0
+  notes: 'output: one LR rule per precision, frozen in manifests/lr_rules.yaml'
+- run_id: p1-lr-60m-2-m8
+  phase: p1
+  size: 60m
+  precision: '2'
+  tokens_per_param: 16.814092630853995
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: 8.0
+  total_tokens: 1000000000
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - lr_probe
+  est_gpu_hours: 0.33408560835861134
+  est_cost_usd: 0.9354397034041116
+  max_wall_clock_mult: 3.0
+  notes: 'output: one LR rule per precision, frozen in manifests/lr_rules.yaml'
+- run_id: p1-lr-60m-3-m0.5
+  phase: p1
+  size: 60m
+  precision: '3'
+  tokens_per_param: 16.814092630853995
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: 0.5
+  total_tokens: 1000000000
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - lr_probe
+  est_gpu_hours: 0.33408560835861134
+  est_cost_usd: 0.9354397034041116
+  max_wall_clock_mult: 3.0
+  notes: 'output: one LR rule per precision, frozen in manifests/lr_rules.yaml'
+- run_id: p1-lr-60m-3-m1
+  phase: p1
+  size: 60m
+  precision: '3'
+  tokens_per_param: 16.814092630853995
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: 1.0
+  total_tokens: 1000000000
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - lr_probe
+  est_gpu_hours: 0.33408560835861134
+  est_cost_usd: 0.9354397034041116
+  max_wall_clock_mult: 3.0
+  notes: 'output: one LR rule per precision, frozen in manifests/lr_rules.yaml'
+- run_id: p1-lr-60m-3-m2
+  phase: p1
+  size: 60m
+  precision: '3'
+  tokens_per_param: 16.814092630853995
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: 2.0
+  total_tokens: 1000000000
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - lr_probe
+  est_gpu_hours: 0.33408560835861134
+  est_cost_usd: 0.9354397034041116
+  max_wall_clock_mult: 3.0
+  notes: 'output: one LR rule per precision, frozen in manifests/lr_rules.yaml'
+- run_id: p1-lr-60m-3-m4
+  phase: p1
+  size: 60m
+  precision: '3'
+  tokens_per_param: 16.814092630853995
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: 4.0
+  total_tokens: 1000000000
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - lr_probe
+  est_gpu_hours: 0.33408560835861134
+  est_cost_usd: 0.9354397034041116
+  max_wall_clock_mult: 3.0
+  notes: 'output: one LR rule per precision, frozen in manifests/lr_rules.yaml'
+- run_id: p1-lr-60m-3-m8
+  phase: p1
+  size: 60m
+  precision: '3'
+  tokens_per_param: 16.814092630853995
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: 8.0
+  total_tokens: 1000000000
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - lr_probe
+  est_gpu_hours: 0.33408560835861134
+  est_cost_usd: 0.9354397034041116
+  max_wall_clock_mult: 3.0
+  notes: 'output: one LR rule per precision, frozen in manifests/lr_rules.yaml'
+- run_id: p1-lr-60m-4-m0.5
+  phase: p1
+  size: 60m
+  precision: '4'
+  tokens_per_param: 16.814092630853995
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: 0.5
+  total_tokens: 1000000000
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - lr_probe
+  est_gpu_hours: 0.33408560835861134
+  est_cost_usd: 0.9354397034041116
+  max_wall_clock_mult: 3.0
+  notes: 'output: one LR rule per precision, frozen in manifests/lr_rules.yaml'
+- run_id: p1-lr-60m-4-m1
+  phase: p1
+  size: 60m
+  precision: '4'
+  tokens_per_param: 16.814092630853995
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: 1.0
+  total_tokens: 1000000000
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - lr_probe
+  est_gpu_hours: 0.33408560835861134
+  est_cost_usd: 0.9354397034041116
+  max_wall_clock_mult: 3.0
+  notes: 'output: one LR rule per precision, frozen in manifests/lr_rules.yaml'
+- run_id: p1-lr-60m-4-m2
+  phase: p1
+  size: 60m
+  precision: '4'
+  tokens_per_param: 16.814092630853995
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: 2.0
+  total_tokens: 1000000000
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - lr_probe
+  est_gpu_hours: 0.33408560835861134
+  est_cost_usd: 0.9354397034041116
+  max_wall_clock_mult: 3.0
+  notes: 'output: one LR rule per precision, frozen in manifests/lr_rules.yaml'
+- run_id: p1-lr-60m-4-m4
+  phase: p1
+  size: 60m
+  precision: '4'
+  tokens_per_param: 16.814092630853995
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: 4.0
+  total_tokens: 1000000000
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - lr_probe
+  est_gpu_hours: 0.33408560835861134
+  est_cost_usd: 0.9354397034041116
+  max_wall_clock_mult: 3.0
+  notes: 'output: one LR rule per precision, frozen in manifests/lr_rules.yaml'
+- run_id: p1-lr-60m-4-m8
+  phase: p1
+  size: 60m
+  precision: '4'
+  tokens_per_param: 16.814092630853995
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: 8.0
+  total_tokens: 1000000000
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - lr_probe
+  est_gpu_hours: 0.33408560835861134
+  est_cost_usd: 0.9354397034041116
+  max_wall_clock_mult: 3.0
+  notes: 'output: one LR rule per precision, frozen in manifests/lr_rules.yaml'
+- run_id: p1-lr-60m-bf16-m0.5
+  phase: p1
+  size: 60m
+  precision: bf16
+  tokens_per_param: 16.814092630853995
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: 0.5
+  total_tokens: 1000000000
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - lr_probe
+  est_gpu_hours: 0.2637517960725879
+  est_cost_usd: 0.7385050290032461
+  max_wall_clock_mult: 3.0
+  notes: 'output: one LR rule per precision, frozen in manifests/lr_rules.yaml'
+- run_id: p1-lr-60m-bf16-m1
+  phase: p1
+  size: 60m
+  precision: bf16
+  tokens_per_param: 16.814092630853995
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: 1.0
+  total_tokens: 1000000000
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - lr_probe
+  est_gpu_hours: 0.2637517960725879
+  est_cost_usd: 0.7385050290032461
+  max_wall_clock_mult: 3.0
+  notes: 'output: one LR rule per precision, frozen in manifests/lr_rules.yaml'
+- run_id: p1-lr-60m-bf16-m2
+  phase: p1
+  size: 60m
+  precision: bf16
+  tokens_per_param: 16.814092630853995
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: 2.0
+  total_tokens: 1000000000
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - lr_probe
+  est_gpu_hours: 0.2637517960725879
+  est_cost_usd: 0.7385050290032461
+  max_wall_clock_mult: 3.0
+  notes: 'output: one LR rule per precision, frozen in manifests/lr_rules.yaml'
+- run_id: p1-lr-60m-bf16-m4
+  phase: p1
+  size: 60m
+  precision: bf16
+  tokens_per_param: 16.814092630853995
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: 4.0
+  total_tokens: 1000000000
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - lr_probe
+  est_gpu_hours: 0.2637517960725879
+  est_cost_usd: 0.7385050290032461
+  max_wall_clock_mult: 3.0
+  notes: 'output: one LR rule per precision, frozen in manifests/lr_rules.yaml'
+- run_id: p1-lr-60m-bf16-m8
+  phase: p1
+  size: 60m
+  precision: bf16
+  tokens_per_param: 16.814092630853995
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: 8.0
+  total_tokens: 1000000000
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - lr_probe
+  est_gpu_hours: 0.2637517960725879
+  est_cost_usd: 0.7385050290032461
+  max_wall_clock_mult: 3.0
+  notes: 'output: one LR rule per precision, frozen in manifests/lr_rules.yaml'
+- run_id: p1-ffn-125m-swiglu-tp20
+  phase: p1
+  size: 125m
+  precision: '1.58'
+  tokens_per_param: 20.0
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: null
+  total_tokens: null
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - ffn_ablation
+  est_gpu_hours: 1.82353280835145
+  est_cost_usd: 5.105891863384059
+  max_wall_clock_mult: 3.0
+  notes: freeze the winner across all arms (PLAN.md s6)
+- run_id: p1-ffn-125m-swiglu-tp80
+  phase: p1
+  size: 125m
+  precision: '1.58'
+  tokens_per_param: 80.0
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: null
+  total_tokens: null
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - ffn_ablation
+  est_gpu_hours: 7.2941312334058
+  est_cost_usd: 20.423567453536236
+  max_wall_clock_mult: 3.0
+  notes: freeze the winner across all arms (PLAN.md s6)
+- run_id: p1-ffn-125m-sq_relu-tp20
+  phase: p1
+  size: 125m
+  precision: '1.58'
+  tokens_per_param: 20.0
+  seed: 0
+  ffn_type: sq_relu
+  lr: null
+  lr_mult_override: null
+  total_tokens: null
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - ffn_ablation
+  est_gpu_hours: 1.82353280835145
+  est_cost_usd: 5.105891863384059
+  max_wall_clock_mult: 3.0
+  notes: freeze the winner across all arms (PLAN.md s6)
+- run_id: p1-ffn-125m-sq_relu-tp80
+  phase: p1
+  size: 125m
+  precision: '1.58'
+  tokens_per_param: 80.0
+  seed: 0
+  ffn_type: sq_relu
+  lr: null
+  lr_mult_override: null
+  total_tokens: null
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - ffn_ablation
+  est_gpu_hours: 7.2941312334058
+  est_cost_usd: 20.423567453536236
+  max_wall_clock_mult: 3.0
+  notes: freeze the winner across all arms (PLAN.md s6)
+- run_id: 125m-1.58-tp20-s0
+  phase: p1
+  size: 125m
+  precision: '1.58'
+  tokens_per_param: 20.0
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: null
+  total_tokens: null
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - gap_study
+  - reused_in_p2
+  est_gpu_hours: 1.82353280835145
+  est_cost_usd: 5.105891863384059
+  max_wall_clock_mult: 3.0
+  notes: designed with the exact P2 configs; reused in the P2 grid
+- run_id: 125m-1.58-tp80-s0
+  phase: p1
+  size: 125m
+  precision: '1.58'
+  tokens_per_param: 80.0
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: null
+  total_tokens: null
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - gap_study
+  - reused_in_p2
+  est_gpu_hours: 7.2941312334058
+  est_cost_usd: 20.423567453536236
+  max_wall_clock_mult: 3.0
+  notes: designed with the exact P2 configs; reused in the P2 grid
+- run_id: 125m-1.58-tp320-s0
+  phase: p1
+  size: 125m
+  precision: '1.58'
+  tokens_per_param: 320.0
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: null
+  total_tokens: null
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - gap_study
+  - reused_in_p2
+  est_gpu_hours: 29.1765249336232
+  est_cost_usd: 81.69426981414495
+  max_wall_clock_mult: 3.0
+  notes: designed with the exact P2 configs; reused in the P2 grid
+- run_id: 125m-2-tp20-s0
+  phase: p1
+  size: 125m
+  precision: '2'
+  tokens_per_param: 20.0
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: null
+  total_tokens: null
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - gap_study
+  - reused_in_p2
+  est_gpu_hours: 1.82353280835145
+  est_cost_usd: 5.105891863384059
+  max_wall_clock_mult: 3.0
+  notes: designed with the exact P2 configs; reused in the P2 grid
+- run_id: 125m-2-tp80-s0
+  phase: p1
+  size: 125m
+  precision: '2'
+  tokens_per_param: 80.0
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: null
+  total_tokens: null
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - gap_study
+  - reused_in_p2
+  est_gpu_hours: 7.2941312334058
+  est_cost_usd: 20.423567453536236
+  max_wall_clock_mult: 3.0
+  notes: designed with the exact P2 configs; reused in the P2 grid
+- run_id: 125m-2-tp320-s0
+  phase: p1
+  size: 125m
+  precision: '2'
+  tokens_per_param: 320.0
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: null
+  total_tokens: null
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - gap_study
+  - reused_in_p2
+  est_gpu_hours: 29.1765249336232
+  est_cost_usd: 81.69426981414495
+  max_wall_clock_mult: 3.0
+  notes: designed with the exact P2 configs; reused in the P2 grid
+- run_id: 125m-3-tp20-s0
+  phase: p1
+  size: 125m
+  precision: '3'
+  tokens_per_param: 20.0
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: null
+  total_tokens: null
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - gap_study
+  - reused_in_p2
+  est_gpu_hours: 1.82353280835145
+  est_cost_usd: 5.105891863384059
+  max_wall_clock_mult: 3.0
+  notes: designed with the exact P2 configs; reused in the P2 grid
+- run_id: 125m-3-tp80-s0
+  phase: p1
+  size: 125m
+  precision: '3'
+  tokens_per_param: 80.0
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: null
+  total_tokens: null
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - gap_study
+  - reused_in_p2
+  est_gpu_hours: 7.2941312334058
+  est_cost_usd: 20.423567453536236
+  max_wall_clock_mult: 3.0
+  notes: designed with the exact P2 configs; reused in the P2 grid
+- run_id: 125m-3-tp320-s0
+  phase: p1
+  size: 125m
+  precision: '3'
+  tokens_per_param: 320.0
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: null
+  total_tokens: null
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - gap_study
+  - reused_in_p2
+  est_gpu_hours: 29.1765249336232
+  est_cost_usd: 81.69426981414495
+  max_wall_clock_mult: 3.0
+  notes: designed with the exact P2 configs; reused in the P2 grid
+- run_id: 125m-4-tp20-s0
+  phase: p1
+  size: 125m
+  precision: '4'
+  tokens_per_param: 20.0
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: null
+  total_tokens: null
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - gap_study
+  - reused_in_p2
+  est_gpu_hours: 1.82353280835145
+  est_cost_usd: 5.105891863384059
+  max_wall_clock_mult: 3.0
+  notes: designed with the exact P2 configs; reused in the P2 grid
+- run_id: 125m-4-tp80-s0
+  phase: p1
+  size: 125m
+  precision: '4'
+  tokens_per_param: 80.0
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: null
+  total_tokens: null
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - gap_study
+  - reused_in_p2
+  est_gpu_hours: 7.2941312334058
+  est_cost_usd: 20.423567453536236
+  max_wall_clock_mult: 3.0
+  notes: designed with the exact P2 configs; reused in the P2 grid
+- run_id: 125m-4-tp320-s0
+  phase: p1
+  size: 125m
+  precision: '4'
+  tokens_per_param: 320.0
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: null
+  total_tokens: null
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - gap_study
+  - reused_in_p2
+  est_gpu_hours: 29.1765249336232
+  est_cost_usd: 81.69426981414495
+  max_wall_clock_mult: 3.0
+  notes: designed with the exact P2 configs; reused in the P2 grid
+- run_id: 125m-bf16-tp20-s0
+  phase: p1
+  size: 125m
+  precision: bf16
+  tokens_per_param: 20.0
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: null
+  total_tokens: null
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - gap_study
+  - reused_in_p2
+  est_gpu_hours: 1.4396311644879867
+  est_cost_usd: 4.030967260566363
+  max_wall_clock_mult: 3.0
+  notes: designed with the exact P2 configs; reused in the P2 grid
+- run_id: 125m-bf16-tp80-s0
+  phase: p1
+  size: 125m
+  precision: bf16
+  tokens_per_param: 80.0
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: null
+  total_tokens: null
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - gap_study
+  - reused_in_p2
+  est_gpu_hours: 5.758524657951947
+  est_cost_usd: 16.12386904226545
+  max_wall_clock_mult: 3.0
+  notes: designed with the exact P2 configs; reused in the P2 grid
+- run_id: 125m-bf16-tp320-s0
+  phase: p1
+  size: 125m
+  precision: bf16
+  tokens_per_param: 320.0
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: null
+  total_tokens: null
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - gap_study
+  - reused_in_p2
+  est_gpu_hours: 23.034098631807787
+  est_cost_usd: 64.4954761690618
+  max_wall_clock_mult: 3.0
+  notes: designed with the exact P2 configs; reused in the P2 grid

@@ -1,0 +1,190 @@
+version: 1
+generated_by: logos.manifest.generate
+git_sha: 582b97b28e70001995ef66f1b31b0f8b3215c5f0
+phase: p4
+meta:
+  phase: p4
+  goal: 'RQ5: weights + KV total-footprint law'
+  eval_jobs:
+    kv_posthoc_sweep:
+      description: post-hoc KV-cache quantization on existing checkpoints; eval-only,
+        no training runs
+      checkpoint_globs:
+      - runs/250m-*-tp*-s0/checkpoints/final*
+      - runs/490m-*-tp*-s0/checkpoints/final*
+      - runs/1b-*-tp*-s0/checkpoints/final*
+      kv_bits:
+      - 8
+      - 4
+      - 3
+      - 2
+      evals:
+      - bpb
+      - ruler_4k_32k
+      - niah
+      - longbench_e
+runs:
+- run_id: p4-250m-1.58-kv8-tp80
+  phase: p4
+  size: 250m
+  precision: '1.58'
+  tokens_per_param: 80.0
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: null
+  total_tokens: null
+  kv_qat_bits: 8
+  gqa_ratio: 4
+  tags:
+  - kv_qat
+  est_gpu_hours: 28.757800122899273
+  est_cost_usd: 80.52184034411796
+  max_wall_clock_mult: 3.0
+  notes: ''
+- run_id: p4-250m-4-kv8-tp80
+  phase: p4
+  size: 250m
+  precision: '4'
+  tokens_per_param: 80.0
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: null
+  total_tokens: null
+  kv_qat_bits: 8
+  gqa_ratio: 4
+  tags:
+  - kv_qat
+  est_gpu_hours: 28.757800122899273
+  est_cost_usd: 80.52184034411796
+  max_wall_clock_mult: 3.0
+  notes: ''
+- run_id: p4-250m-bf16-kv8-tp80
+  phase: p4
+  size: 250m
+  precision: bf16
+  tokens_per_param: 80.0
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: null
+  total_tokens: null
+  kv_qat_bits: 8
+  gqa_ratio: 4
+  tags:
+  - kv_qat
+  est_gpu_hours: 22.703526412815215
+  est_cost_usd: 63.5698739558826
+  max_wall_clock_mult: 3.0
+  notes: ''
+- run_id: p4-250m-1.58-kv4-tp80
+  phase: p4
+  size: 250m
+  precision: '1.58'
+  tokens_per_param: 80.0
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: null
+  total_tokens: null
+  kv_qat_bits: 4
+  gqa_ratio: 4
+  tags:
+  - kv_qat
+  est_gpu_hours: 28.757800122899273
+  est_cost_usd: 80.52184034411796
+  max_wall_clock_mult: 3.0
+  notes: ''
+- run_id: p4-250m-4-kv4-tp80
+  phase: p4
+  size: 250m
+  precision: '4'
+  tokens_per_param: 80.0
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: null
+  total_tokens: null
+  kv_qat_bits: 4
+  gqa_ratio: 4
+  tags:
+  - kv_qat
+  est_gpu_hours: 28.757800122899273
+  est_cost_usd: 80.52184034411796
+  max_wall_clock_mult: 3.0
+  notes: ''
+- run_id: p4-250m-bf16-kv4-tp80
+  phase: p4
+  size: 250m
+  precision: bf16
+  tokens_per_param: 80.0
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: null
+  total_tokens: null
+  kv_qat_bits: 4
+  gqa_ratio: 4
+  tags:
+  - kv_qat
+  est_gpu_hours: 22.703526412815215
+  est_cost_usd: 63.5698739558826
+  max_wall_clock_mult: 3.0
+  notes: ''
+- run_id: p4-250m-1.58-kv4-tp80-ctx32k
+  phase: p4
+  size: 250m
+  precision: '1.58'
+  tokens_per_param: 80.0
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: null
+  total_tokens: 22261268480
+  kv_qat_bits: 4
+  gqa_ratio: 4
+  tags:
+  - kv_qat
+  - ctx_ext
+  est_gpu_hours: 31.6335801351892
+  est_cost_usd: 88.57402437852976
+  max_wall_clock_mult: 3.0
+  notes: +10% tokens mid-train context extension to 32k
+- run_id: p4-250m-bf16-kv4-tp80-ctx32k
+  phase: p4
+  size: 250m
+  precision: bf16
+  tokens_per_param: 80.0
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: null
+  total_tokens: 22261268480
+  kv_qat_bits: 4
+  gqa_ratio: 4
+  tags:
+  - kv_qat
+  - ctx_ext
+  est_gpu_hours: 24.973879054096734
+  est_cost_usd: 69.92686135147085
+  max_wall_clock_mult: 3.0
+  notes: +10% tokens mid-train context extension to 32k
+- run_id: p4-250m-1.58-gqa8-tp80
+  phase: p4
+  size: 250m
+  precision: '1.58'
+  tokens_per_param: 80.0
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: null
+  total_tokens: null
+  kv_qat_bits: null
+  gqa_ratio: 8
+  tags:
+  - gqa
+  est_gpu_hours: 27.578119632475634
+  est_cost_usd: 77.21873497093176
+  max_wall_clock_mult: 3.0
+  notes: 8:1 GQA arm; the 4:1 baseline reuses the P2 grid run
