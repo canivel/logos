@@ -1,0 +1,27 @@
+{
+  "probe": "quant_numerics",
+  "sha256": "816652211e5cf81f235152e0503c9f0873d0871bec22a62b23fded0b05a49afa",
+  "gates": [
+    [
+      "G1",
+      "ternary effective weights match the numpy absmean reference on seeded masters (max |diff| <= 1e-7)"
+    ],
+    [
+      "G2",
+      "ternary levels are exactly {-gamma, 0, +gamma} and gamma equals numpy mean|W| within 1e-7"
+    ],
+    [
+      "G3",
+      "2/3/4-bit effective weights match the numpy per-group reference given the layer's own scale values (max |diff| <= 1e-7); <= 2^k distinct levels per group"
+    ],
+    [
+      "G4",
+      "ternary ||W - Wq|| matches the numpy-predicted error on the same tensor (rel diff <= 1e-5) and error decreases monotonically 2b -> 3b -> 4b on identical masters with each layer's init scales"
+    ],
+    [
+      "G5",
+      "activation quant: per-token codes are integers in [-128, 127] and |x - xq| <= 0.5/scale per element"
+    ]
+  ],
+  "registered": "2026-08-05 19:40:42"
+}

@@ -152,7 +152,10 @@ def make_model(
 
 
 # Model shape ladder (PLAN.md section 4). head_dim 64-128, GQA 4:1 throughout.
+# "micro" (~4.7M) is not part of the law-fitting grid: it exists for local
+# smoke experiments and the validation panel's end-to-end probes.
 LADDER: dict[str, dict[str, int]] = {
+    "micro": dict(d_model=256, n_layers=6, n_heads=4, n_kv_heads=1),
     "25m": dict(d_model=512, n_layers=8, n_heads=8, n_kv_heads=2),
     "60m": dict(d_model=640, n_layers=12, n_heads=8, n_kv_heads=2, head_dim=80),
     "125m": dict(d_model=768, n_layers=18, n_heads=12, n_kv_heads=3),
@@ -212,6 +215,7 @@ DEFAULT_LR_MULT: dict[Precision, float] = {
 
 # Base LR by ladder size (bf16 arm), ~mup-informed sqrt-width scaling from 3e-3@512.
 BASE_LR: dict[str, float] = {
+    "micro": 3.0e-3,
     "25m": 3.0e-3,
     "60m": 2.7e-3,
     "125m": 2.4e-3,
@@ -267,12 +271,12 @@ class RunSpec:
             lr = BASE_LR[self.size] * mult
         return TrainConfig(lr=lr, total_tokens=total, seed=self.seed)
 
-    # Fields that affect the science of a run. Cost estimates, tags, notes and
-    # ops knobs are excluded so re-estimating budgets never changes the hash
-    # of a scientifically identical run.
+    # Fields that affect the science of a run. Cost estimates, tags, notes,
+    # ops knobs AND phase are excluded: re-estimating budgets never changes
+    # the hash, and a P1 gap-study run re-emitted in the P2 grid (the
+    # documented reuse, PLAN.md s6) keeps one identity.
     _SCIENCE_FIELDS = (
         "run_id",
-        "phase",
         "size",
         "precision",
         "tokens_per_param",

@@ -1,0 +1,23 @@
+{
+  "probe": "stats_discipline",
+  "sha256": "d76896606305c339b416fc4fedbaf810cfb0a95d939cd769cebf92e8dfd67d96",
+  "gates": [
+    [
+      "G1",
+      "seed_sigma is a true ddof=1 std: matches the plain-Python recompute for every multi-seed cell; single-seed cells are NaN (fixture + real file when present)"
+    ],
+    [
+      "G2",
+      "gap_vs_sigma's exceeds_2sigma flag is consistent with |gap| > 2*max(arm sigmas) recomputed by hand (fixture + real file)"
+    ],
+    [
+      "G3",
+      "2-sigma discipline: nothing is flagged significant where sigma is NaN/unknown; single-seed cells are never significant"
+    ],
+    [
+      "G4",
+      "results-file audit (micro rows): finite positive sigma on multi-seed cells, all statuses complete, bpb in [0.5, 9], and bf16 mean <= ternary mean + 0.5 (vacuous if absent)"
+    ]
+  ],
+  "registered": "2026-08-05 19:45:36"
+}

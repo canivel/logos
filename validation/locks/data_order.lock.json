@@ -1,0 +1,27 @@
+{
+  "probe": "data_order",
+  "sha256": "53d350466acf5390697dcce9a045233b98e19b2a5497717c6f1ed1eab52b8568",
+  "gates": [
+    [
+      "G1",
+      "two independent TokenLoaders over the same shards + data_seed produce bit-identical 50-batch streams (per-batch sha256)"
+    ],
+    [
+      "G2",
+      "iter_batches(start_step=k) equals a fresh stream with k batches skipped, for k in {1, 7, 16, 37} (crossing an epoch boundary)"
+    ],
+    [
+      "G3",
+      "loaders constructed exactly as trainer.train constructs them for two RunSpecs differing only in precision (bf16 vs 1.58) yield identical 20-batch streams"
+    ],
+    [
+      "G4",
+      "one epoch consumes every window exactly once \u2014 no repeats, none missing \u2014 with windows re-derived from the raw shard bytes"
+    ],
+    [
+      "G5",
+      "background micro-P0: local-micro-1.58-s0 and local-micro-bf16-s0 metrics step->tokens mappings are identical (vacuous if both runs never complete)"
+    ]
+  ],
+  "registered": "2026-08-05 19:45:01"
+}

@@ -1,0 +1,23 @@
+{
+  "probe": "benchmark_pinning",
+  "sha256": "e8b2edbfdad3de50349dbefce10afc222070a2d58b78897b8014ab87fdda51b5",
+  "gates": [
+    [
+      "G1",
+      "downstream.py pins lm-eval == 0.4.9: pin constant and a version-mismatch raise path exist in source; the module imports cleanly without lm_eval; missing -> informative ImportError, wrong version -> RuntimeError"
+    ],
+    [
+      "G2",
+      "task suites equal the PLAN.md lists: SMALL {arc_easy,hellaswag,piqa,sciq,lambada}, FULL +{arc_challenge,winogrande,boolq,openbookqa}, P3 +mmlu (5-shot), capstone +{gsm8k,ifeval}"
+    ],
+    [
+      "G3",
+      "the two BPB val sets are disjoint from each other and from train, verified on the binary data (byte-corpus split boundaries, else synthetic content non-overlap)"
+    ],
+    [
+      "G4",
+      "every results.jsonl row carries provenance: run_id, manifest-matching config_hash, and status complete for benchmark-bearing rows (vacuous if results.jsonl absent)"
+    ]
+  ],
+  "registered": "2026-08-05 19:44:59"
+}

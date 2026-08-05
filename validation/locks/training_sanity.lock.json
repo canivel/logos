@@ -1,0 +1,27 @@
+{
+  "probe": "training_sanity",
+  "sha256": "402b7045394a7ba2725273ec69e6aa86226431d38ddfd613a39a9ac99d6ae7ea",
+  "gates": [
+    [
+      "G1",
+      "every available run: all metrics.jsonl losses finite, gapless log-interval step sequence, tokens == step * batch_tokens exactly"
+    ],
+    [
+      "G2",
+      "every complete run learns: last-quartile mean loss < first-quartile mean by >5%"
+    ],
+    [
+      "G3",
+      "every complete run's status.json says complete with final_loss (and step) exactly matching the last metrics row"
+    ],
+    [
+      "G4",
+      "own CPU fixture: 20-step run interrupted at step 10 via max_steps, resumed from its checkpoint, matches the uninterrupted twin within 1e-4 (weights + final loss) \u2014 the P0 kill-and-resume requirement"
+    ],
+    [
+      "G5",
+      "when >=5 s0 arms complete: end-of-training loss ordering satisfies bf16 <= {4,3} <= 2 <= 1.58 within 0.15 adjacent-pair tolerance (vacuous otherwise, ordering reported)"
+    ]
+  ],
+  "registered": "2026-08-05 19:46:26"
+}

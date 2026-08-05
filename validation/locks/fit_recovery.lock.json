@@ -1,0 +1,27 @@
+{
+  "probe": "fit_recovery",
+  "sha256": "7e26a7b1dfa6ed1bec90cb2b6177c90c4dce3f526febae0b7828c98cd3b9d999",
+  "gates": [
+    [
+      "G1",
+      "recovery: fitted alpha/beta within 15% relative and f(b) within 10% of hidden truth, on both independent draws"
+    ],
+    [
+      "G2",
+      "LOSO selection prefers Form A-free over Form B on A-generated data, on both draws"
+    ],
+    [
+      "G3",
+      "upward extrapolation: fit on <=250m rows, predict 490m rows; mean |log residual| < 3x the injected noise sigma, both draws"
+    ],
+    [
+      "G4",
+      "prescription: fitted-law b*(M,D) matches true-law b* on >= 90% of a 12x6 grid spanning 0.125-4GB x 20x-320x"
+    ],
+    [
+      "G5",
+      "determinism: same seed twice gives identical fitted params"
+    ]
+  ],
+  "registered": "2026-08-05 19:44:13"
+}

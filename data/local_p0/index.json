@@ -1,0 +1,31 @@
+{
+  "dataset": "gutenberg-bytes:The Project Gutenberg eBook of Frankenstein.txt",
+  "dataset_config": null,
+  "tokenizer": "byte-level",
+  "vocab_size": 256,
+  "eos_id": 0,
+  "seed": 1337,
+  "shards": [
+    {
+      "file": "shard_00000.bin",
+      "tokens": 404036,
+      "utf8_bytes": 404036,
+      "docs": 1
+    }
+  ],
+  "total_tokens": 404036,
+  "val": {
+    "val1": {
+      "file": "val1.bin",
+      "tokens": 22446,
+      "utf8_bytes": 22446,
+      "docs": 1
+    },
+    "val2": {
+      "file": "val2.bin",
+      "tokens": 22447,
+      "utf8_bytes": 22447,
+      "docs": 1
+    }
+  }
+}

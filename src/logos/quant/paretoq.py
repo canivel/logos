@@ -67,9 +67,16 @@ class GroupIntLinear(nn.Linear):
     @torch.no_grad()
     def packed_weight(self) -> tuple[torch.Tensor, torch.Tensor]:
         """(int8 codes in [qmin,qmax] shaped [out, groups, gs], fp32 scales
-        [out, groups]) for export/parity."""
+        [out, groups]) for export/parity.
+
+        Codes are derived with bit-identical arithmetic to quantize_weight():
+        the LSQ grad-rescale round-trip (s*g + (s - s*g)) can differ from s
+        by 1 ulp in fp32, and a master within an ulp of a rounding boundary
+        would otherwise export a different code than the forward pass uses."""
         w = self.weight.float().view(self.out_features, self.n_groups, self.group_size)
-        s = self.scale.float().clamp_min(1e-8).unsqueeze(-1)
+        g = 1.0 / math.sqrt(self.weight.numel() * self.qmax)
+        s0 = self.scale.float().clamp_min(1e-8)
+        s = (s0 * g + (s0 - s0 * g)).unsqueeze(-1)  # forward-path fp32 value
         codes = torch.clamp(torch.round(w / s), self.qmin, self.qmax).to(torch.int8)
         return codes, s.squeeze(-1)
 

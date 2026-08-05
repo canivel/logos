@@ -1,0 +1,23 @@
+{
+  "probe": "footprint",
+  "sha256": "3b9b2a36978ee0165d3182cfc4b7426e919c06c15f1bbeb01ff277a1f5152820",
+  "gates": [
+    [
+      "G1",
+      "measured_bytes() equals the shape-derived arithmetic exactly (body/emb/scale/total) for all 5 arms on the tiny model"
+    ],
+    [
+      "G2",
+      "total packed bytes strictly ordered ternary < 2b < 3b < 4b < bf16 on the tiny model"
+    ],
+    [
+      "G3",
+      "ModelConfig.weight_bytes underestimates measured for 2/3/4-bit and the gap equals exactly the predicted scale bytes plus the bf16 norm/subln bytes the theory omits"
+    ],
+    [
+      "G4",
+      "ModelConfig.kv_bytes at the 1.5b shape, 8k context, bf16 is within 2% of the plan's ~500MB and exactly linear in context, kv_bits, and batch (matching the plan formula)"
+    ]
+  ],
+  "registered": "2026-08-05 19:43:25"
+}

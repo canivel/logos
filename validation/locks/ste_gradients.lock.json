@@ -1,0 +1,23 @@
+{
+  "probe": "ste_gradients",
+  "sha256": "5f56ff9f7fa7c097c301238b34f63cbedd0cd3ee96079c9340d04af90c13a679",
+  "gates": [
+    [
+      "G1",
+      "d ste_round(x)/dx == 1 exactly (autograd equals ones, incl. half-integer points)"
+    ],
+    [
+      "G2",
+      "ste_round_clip gradient equals the [lo, hi] clip-region indicator exactly (boundary inclusive), zero outside"
+    ],
+    [
+      "G3",
+      "BitLinear master-weight autograd gradient on L = sum(BitLinear(x)) matches the hand chain rule c_l*m_kl + sign(w_kl)/n * sum_ij c_j (R_ij - m_ij u_ij) on a fixed 4x3 example (rtol 1e-4)"
+    ],
+    [
+      "G4",
+      "GroupIntLinear scale autograd gradient equals the hand LSQ formula g * sum_j (q_ij - ind_ij v_ij) with grad-rescale g = 1/sqrt(numel*qmax) on a 1-group toy (rtol 1e-4)"
+    ]
+  ],
+  "registered": "2026-08-05 19:43:18"
+}

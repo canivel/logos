@@ -1,0 +1,141 @@
+version: 1
+generated_by: logos.manifest.generate
+git_sha: 15d64599ebf3a9c9dcc0b10401962bcd0504827e
+phase: p0
+meta:
+  purpose: local micro-P0 (panel artifacts, not grid data)
+  corpus: gutenberg-bytes:The Project Gutenberg eBook of Frankenstein.txt
+runs:
+- run_id: local-micro-1.58-s0
+  phase: p0
+  size: micro
+  precision: '1.58'
+  tokens_per_param: 0.8707
+  seed: 0
+  ffn_type: swiglu
+  lr: 0.006
+  lr_mult_override: null
+  total_tokens: 4194304
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - local-smoke
+  - byte-level
+  est_gpu_hours: 0.0
+  est_cost_usd: 0.0
+  max_wall_clock_mult: 3.0
+  notes: micro-P0 on real text; excluded from law fitting
+- run_id: local-micro-1.58-s1
+  phase: p0
+  size: micro
+  precision: '1.58'
+  tokens_per_param: 0.8707
+  seed: 1
+  ffn_type: swiglu
+  lr: 0.006
+  lr_mult_override: null
+  total_tokens: 4194304
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - local-smoke
+  - byte-level
+  est_gpu_hours: 0.0
+  est_cost_usd: 0.0
+  max_wall_clock_mult: 3.0
+  notes: micro-P0 on real text; excluded from law fitting
+- run_id: local-micro-bf16-s0
+  phase: p0
+  size: micro
+  precision: bf16
+  tokens_per_param: 0.8707
+  seed: 0
+  ffn_type: swiglu
+  lr: 0.003
+  lr_mult_override: null
+  total_tokens: 4194304
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - local-smoke
+  - byte-level
+  est_gpu_hours: 0.0
+  est_cost_usd: 0.0
+  max_wall_clock_mult: 3.0
+  notes: micro-P0 on real text; excluded from law fitting
+- run_id: local-micro-bf16-s1
+  phase: p0
+  size: micro
+  precision: bf16
+  tokens_per_param: 0.8707
+  seed: 1
+  ffn_type: swiglu
+  lr: 0.003
+  lr_mult_override: null
+  total_tokens: 4194304
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - local-smoke
+  - byte-level
+  est_gpu_hours: 0.0
+  est_cost_usd: 0.0
+  max_wall_clock_mult: 3.0
+  notes: micro-P0 on real text; excluded from law fitting
+- run_id: local-micro-2-s0
+  phase: p0
+  size: micro
+  precision: '2'
+  tokens_per_param: 0.8707
+  seed: 0
+  ffn_type: swiglu
+  lr: 0.006
+  lr_mult_override: null
+  total_tokens: 4194304
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - local-smoke
+  - byte-level
+  est_gpu_hours: 0.0
+  est_cost_usd: 0.0
+  max_wall_clock_mult: 3.0
+  notes: micro-P0 on real text; excluded from law fitting
+- run_id: local-micro-3-s0
+  phase: p0
+  size: micro
+  precision: '3'
+  tokens_per_param: 0.8707
+  seed: 0
+  ffn_type: swiglu
+  lr: 0.0045000000000000005
+  lr_mult_override: null
+  total_tokens: 4194304
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - local-smoke
+  - byte-level
+  est_gpu_hours: 0.0
+  est_cost_usd: 0.0
+  max_wall_clock_mult: 3.0
+  notes: micro-P0 on real text; excluded from law fitting
+- run_id: local-micro-4-s0
+  phase: p0
+  size: micro
+  precision: '4'
+  tokens_per_param: 0.8707
+  seed: 0
+  ffn_type: swiglu
+  lr: 0.00375
+  lr_mult_override: null
+  total_tokens: 4194304
+  kv_qat_bits: null
+  gqa_ratio: 4
+  tags:
+  - local-smoke
+  - byte-level
+  est_gpu_hours: 0.0
+  est_cost_usd: 0.0
+  max_wall_clock_mult: 3.0
+  notes: micro-P0 on real text; excluded from law fitting

@@ -1,0 +1,23 @@
+{
+  "probe": "bpb_definition",
+  "sha256": "bd8a5c58fd6f3ca953e17ea8b48e1d8178f1a6b4aa16f53102b8ccd9fc5fd564",
+  "gates": [
+    [
+      "G1",
+      "uniform-logits closed form: constant-zero-logit model gives BPB = T*log2(V)/B (T scored tokens, B bytes) within 1e-9"
+    ],
+    [
+      "G2",
+      "trained tiny model: bpb() matches the independent per-token NLL loop within 1e-6 bits/byte, incl. a partial final window"
+    ],
+    [
+      "G3",
+      "token conservation: reported n_tokens == scored positions == n-1; every position except 0 scored exactly once at stride=seq_len"
+    ],
+    [
+      "G4",
+      "byte-level anchor (data/local_p0): bpb == nll_sum_nats/ln2/n_bytes exactly; n_bytes == index tokens == utf8_bytes; n_tokens == tokens-1 (vacuous if the index is absent)"
+    ]
+  ],
+  "registered": "2026-08-05 19:44:04"
+}

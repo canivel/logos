@@ -125,17 +125,23 @@ def bpb(
 
 
 def _read_index(data_dir: Path, which: str) -> tuple[str, int | None, int]:
-    """Defensive index.json read. Preferred schema:
-    {"val1": {"bin": "val1.bin", "n_tokens": int, "n_bytes": int}, ...};
-    flat fallback: {"val1_bin": ..., "val1_n_tokens": ..., "val1_n_bytes": ...}.
+    """Defensive index.json read. Canonical schema (data/prepare.py):
+    {"val": {"val1": {"file": ..., "tokens": int, "utf8_bytes": int}, ...}};
+    also accepted: top-level {"val1": {"bin"|"file"|"path", "n_tokens"|"tokens",
+    "n_bytes"|"bytes"|"utf8_bytes"}} and the flat {"val1_bin": ...} fallback.
     """
     with open(data_dir / "index.json", encoding="utf-8") as f:
         idx = json.load(f)
     entry = idx.get(which)
+    if not isinstance(entry, dict) and isinstance(idx.get("val"), dict):
+        entry = idx["val"].get(which)
     if isinstance(entry, dict):
         bin_name = entry.get("bin") or entry.get("path") or entry.get("file") or f"{which}.bin"
-        n_tokens = entry.get("n_tokens")
-        n_bytes = entry.get("n_bytes") or entry.get("bytes") or entry.get("source_bytes")
+        n_tokens = entry.get("n_tokens") if entry.get("n_tokens") is not None else entry.get("tokens")
+        n_bytes = (
+            entry.get("n_bytes") or entry.get("bytes") or entry.get("source_bytes")
+            or entry.get("utf8_bytes")
+        )
     else:
         bin_name = idx.get(f"{which}_bin") or idx.get(f"{which}_path") or f"{which}.bin"
         n_tokens = idx.get(f"{which}_n_tokens")

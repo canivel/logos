@@ -134,16 +134,39 @@ def train(
         opt.load_state_dict(state["optimizer"])
         step, tokens = state["step"], state["tokens"]
         prev_wall = state.get("wall_s", 0.0)
-        torch.set_rng_state(state["rng"]["torch"])
+        # map_location may have moved the RNG ByteTensors to the GPU;
+        # torch requires them on CPU.
+        torch.set_rng_state(state["rng"]["torch"].cpu())
         if on_cuda and state["rng"].get("cuda") is not None:
             try:
-                torch.cuda.set_rng_state_all(state["rng"]["cuda"])
+                torch.cuda.set_rng_state_all([s.cpu() for s in state["rng"]["cuda"]])
             except RuntimeError:
                 pass  # resumed on a different GPU count; init RNG stands
 
     total_steps = math.ceil(cfg.total_tokens / cfg.batch_tokens)
     if ex.max_steps is not None:
         total_steps = min(total_steps, ex.max_steps)
+
+    # Re-invoking a finished run must be a no-op that preserves its status
+    # (the launcher and Tier-2 agent rely on status.json being stable).
+    if step >= total_steps:
+        sf = run_dir / "status.json"
+        prior = json.loads(sf.read_text()) if sf.exists() else {}
+        if prior.get("status") == "complete":
+            fl = prior.get("final_loss")
+            if not isinstance(fl, (int, float)) or not math.isfinite(fl):
+                mf = run_dir / "metrics.jsonl"
+                rows = [
+                    json.loads(x) for x in mf.read_text().splitlines() if x.strip()
+                ] if mf.exists() else []
+                if rows:
+                    prior["final_loss"] = rows[-1]["loss"]
+                    _write_status(run_dir, **prior)
+            return prior
+        return _write_status(
+            run_dir, status="complete", final_loss=None, step=step, tokens=tokens,
+            wall_s=prev_wall,
+        )
     eval_every = cfg.eval_interval_tokens or max(1, cfg.total_tokens // 20)
     next_eval = (tokens // eval_every + 1) * eval_every
     peak = ex.peak_flops if ex.peak_flops is not None else detect_peak_flops(device)

@@ -1,0 +1,27 @@
+{
+  "probe": "manifest_integrity",
+  "sha256": "270482f3f3b5a35ab5d91900d6d36bd123faeedb39a8afb93771a26c4e6e97f7",
+  "gates": [
+    [
+      "G1",
+      "phase manifests hold exactly the PLAN.md run counts (p0:16 p1:44 p2:130 p2ext:3 p3:6 p4:9 p5:1); p2's 15 P1-reused rows are tagged and zero-cost"
+    ],
+    [
+      "G2",
+      "run_ids unique across all manifests except the 15 documented p1/p2 reuses, which share run_id AND config_hash"
+    ],
+    [
+      "G3",
+      "every results.jsonl row's config_hash matches a RunSpec rebuilt from a manifest row (recomputed hash); a tampered-manifest fixture makes the check fire and a clean fixture passes"
+    ],
+    [
+      "G4",
+      "BudgetLedger: a >cap reservation raises BudgetExceeded; a >$200 run sets requires_human; CAPS/TIER3_COST_USD are literal numeric module constants (AST-verified, no env/config lookup)"
+    ],
+    [
+      "G5",
+      "summed manifest est_cost_usd lands in the plan's $15k-30k window and p2 est_gpu_hours within +/-40% of ~1800"
+    ]
+  ],
+  "registered": "2026-08-05 19:45:48"
+}

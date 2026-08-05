@@ -1,0 +1,23 @@
+{
+  "probe": "export_parity",
+  "sha256": "1620f24af2e0fb6094e8473e6a5a2fcb8294f721fe873338504ad8bb447c3db8",
+  "gates": [
+    [
+      "G1",
+      "independent unpack of export_artifact output reproduces the live model's quantize_weight() for arms {1.58, 2, 3, 4} (max |diff| <= 1e-6)"
+    ],
+    [
+      "G2",
+      "load_artifact round-trip: re-derived codes bitwise-identical to the artifact (gint scales bitwise, ternary gamma within 1e-7, bf16 masters bitwise) and max KL < 1e-4 on 8 synthetic prompts, all 4 quantized arms + bf16; max |dlogit| reported non-gating"
+    ],
+    [
+      "G3",
+      "packed code streams have exact per-format byte lengths: ternary ceil(n/4); 2b ceil(n/4); 3b ceil(n/8)*3; 4b ceil(n/2)"
+    ],
+    [
+      "G4",
+      "every runs/local_p0/*/parity.json reports pass=true (vacuously true if none exist)"
+    ]
+  ],
+  "registered": "2026-08-05 19:43:21"
+}
