@@ -11,7 +11,7 @@ project with **two local GPUs and ~$100 of cloud budget**:
 | Resource | Available | Role |
 |----------|-----------|------|
 | RTX 3080 10GB (now) | unlimited hours, free | Engineering, L0 replication tier |
-| RTX 5090 32GB (arrives Aug 25, 2026) | unlimited hours, free | The main grid (L1-L2), capstone-lite (L5) |
+| RTX 5090 32GB (incoming) | unlimited hours, free | The main grid (L1-L2), capstone-lite (L5) |
 | RunPod, 1x H100 | **~$100 total** | Blind extrapolation anchors ONLY (L3) |
 
 The scientific bet gets *sharper*, not weaker: scaling-law papers have always
@@ -94,7 +94,7 @@ x {20x, 80x} x 2 seeds (8 runs) + 6m x {1.58, bf16} x 320x x 1 seed (2 runs).
 Exit: seed σ at 3m/6m below half the ternary-bf16 gap at 320x; MFU and
 tok/s baselines recorded; queue-driven launcher running unattended.
 
-**L1 — gap dynamics + protocol lock (3080 until Aug 25, then 5090).**
+**L1 — gap dynamics + protocol lock (3080 until the 5090 lands, then 5090).**
 LR probes 6m x 5 precisions x {1x, 2x, 4x} multipliers @ ~30x (15 short
 runs); FFN ablation 12m ternary: 2 new sq_relu runs (the swiglu side reuses
 gap-study rows); gap study 12m x 5 precisions x {20x, 80x, 320x} with 320x
@@ -141,24 +141,24 @@ wall clock), everything else is electricity. Generated per-run numbers:
 
 ## 5. Timeline
 
-| Dates | Phase | Milestone |
-|-------|-------|-----------|
-| Aug 5-24 | L0 on 3080; data prepped; ops running | σ table, replication figure, blog post 0 |
-| Aug 25-Sep 7 | 5090 arrives; L1 | Gap figure, protocol frozen, blog post 1 |
-| Sep 8-Oct 12 | L2 grid on 5090 | Fitted law, headline figures, workshop draft |
-| Oct 13-26 | L3 anchors ($100) | Blind-extrapolation verdict, **arXiv preprint** |
-| Oct 27-Nov 16 | L4 + L5 | Total-footprint note, trit-lite + TRIT-Local release |
-| Nov | Write-up | Full paper draft; everything public on HF + GitHub |
+| Window | Phase | Milestone |
+|--------|-------|-----------|
+| Weeks 1-3 | L0 on 3080; data prepped; ops running | σ table, replication figure, blog post 0 |
+| Weeks 3-5 | L1 (5090 comes online in this window) | Gap figure, protocol frozen, blog post 1 |
+| Weeks 5-10 | L2 grid on 5090 | Fitted law, headline figures, workshop draft |
+| Weeks 10-12 | L3 anchors ($100) | Blind-extrapolation verdict, **arXiv preprint** |
+| Weeks 12-15 | L4 + L5 | Total-footprint note, trit-lite + TRIT-Local release |
+| ~Month 4 | Write-up | Full paper draft; everything public on HF + GitHub |
 
 ## 6. Risks specific to the local program
 
 | Risk | Mitigation |
 |------|------------|
 | Seed noise swamps gaps at 3-12M | 3 seeds at 3m, 2 at 6m; 2σ rule enforced by the results store; contested cells get extra seeds (cheap here) |
-| 320x tier monopolizes the 3080 | 320x runs queue overnight/weekends via the launcher; 5090 absorbs the tail after Aug 25 |
+| 320x tier monopolizes the 3080 | 320x runs queue overnight/weekends via the launcher; the 5090 absorbs the tail once online |
 | Embedding bytes distort budget claims | Fit on non-emb N; body-byte budgets in L5; report both counts everywhere (§3.5) |
 | $100 anchor budget overrun | Ledger hard cap; spot instances; 125m tier alone still answers RQ4 at one size step if 250m is cut |
-| 5090 arrival slips | L0/L1 fully occupy the 3080 until ~Sep 7; L2's 3m-12m rows can start on the 3080 |
+| 5090 arrival slips | L0/L1 fully occupy the 3080 for weeks either way; L2's 3m-12m rows can start on the 3080 |
 | Law only emerges above 100M | Then the anchors falsify the small-scale fit — a publishable negative result the blind protocol makes credible |
 | Scooped | Same differentiators as v0.2 (native QAT, overtraining axis, memory framing) plus a new one: full desktop reproducibility |
 

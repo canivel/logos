@@ -1,24 +1,71 @@
 # LOGOS · memory-optimal scaling laws for natively low-bit LLMs
 
-**Chinchilla tells you how to spend a compute budget. Nobody has answered the
-deployment version: given an inference *memory budget in bytes*, how should
-you split it between parameter count (N), weight precision (b_w), KV-cache
-precision (b_kv), and training tokens (D)?**
+## Why this exists
 
-LOGOS answers that empirically for natively low-bit models — quantization-aware
-training from scratch, BitNet-style — by training a controlled grid across five
-weight precisions (1.58 / 2 / 3 / 4 / bf16 bits), fitting competing functional
-forms L(N, D, b_w), locating the crossovers where *more parameters at fewer
-bits* beats *fewer parameters at more bits*, and validating the fitted law by
-**blind extrapolation**: predictions are committed to this repo before the
-validation runs launch. The model suite is named **TRIT** (one trit = one
+**The binding constraint on AI is shifting from FLOPs to bytes — and the
+industry's standard answer to that, post-hoc quantization, is a patch, not a
+solution.**
+
+The supply side first, because it is not a hypothetical. As of 2026, memory
+is the bottleneck of the AI buildout: hyperscalers have committed roughly
+[$600–630B of 2026 capex](https://alcapitaladvisory.com/research/intelligence/ai-infrastructure.html),
+and memory alone has grown from ~8% of that spend in 2023–24 to
+[~30% in 2026](https://www.digitaltoday.co.kr/en/view/45884/memory-to-account-for-30-percent-of-hyperscalers-capex-in-2026-on-ai-demand).
+The three DRAM makers are diverting wafers to HBM (one HBM3E module sells for
+~10× the equivalent DDR5), datacenters are absorbing
+[~70% of world memory output through 2027](https://wccftech.com/roundup/memory-crisis/),
+server DRAM contract prices [jumped ~60–90% in a single quarter](https://www.idc.com/resource-center/blog/global-memory-shortage-crisis-market-analysis-and-the-potential-impact-on-the-smartphone-and-pc-markets-in-2026/),
+HBM backlogs run [about a year](https://valueaddvc.com/blog/is-the-ai-chip-shortage-over-in-2026-gpu-pricing-and-what-comes-next),
+and supply-side voices range from Intel's "normal by 2028" to SK Hynix
+[warning the crunch could outlast the decade](https://tech-insider.org/memory-chip-shortage-2026-ai-consumer-electronics/).
+2026 DRAM bit supply grows ~16% against AI demand that can absorb all of it.
+Every byte a model needs — weights in HBM, KV cache per user, DRAM in the
+phone or laptop it ships to — is getting scarcer and more expensive, and
+this is a multi-year structural condition, not a cycle blip.
+
+Against that backdrop, look at how the field actually handles memory:
+**train in 16-bit, then quantize the artifact afterward.** Post-training
+quantization treats precision as a deployment afterthought, and it is not a
+sustainable answer for three reasons:
+
+1. **It falls off a cliff exactly where the byte savings matter.** PTQ holds
+   up at 8 and 4 bits and degrades sharply below — the regime where a 4×–10×
+   footprint reduction actually lives is the regime it cannot reach.
+2. **It changes nothing upstream.** You still pretrain the full-precision
+   model on the full-precision memory bill; the scarce resource is spent
+   before compression ever happens. A patch applied after training cannot
+   fix the economics of training.
+3. **It optimizes the wrong objective.** Squeezing a model designed for 16
+   bits into 4 asks "how little damage can we do?" The right question is
+   "what is the best model that *fits the byte budget in the first place*?"
+   — and evidence keeps accumulating (BitNet, ParetoQ, Spectra) that models
+   *trained* low-bit from scratch answer it better than models patched down
+   to low-bit.
+
+If bytes are the scarce resource, compression has to move **into
+pretraining** — new ways of training, not post-processing. But native
+low-bit training is missing its design rule. Chinchilla told the field how
+to split a *compute* budget between parameters and tokens; nobody has
+published the deployment version: **given a memory budget in bytes, how do
+you allocate parameter count (N), weight precision (b_w), KV-cache precision
+(b_kv), and training tokens (D) to maximize quality?**
+
+That law is what LOGOS fits — empirically, for QAT-from-scratch BitNet-style
+models, across five weight precisions (1.58 / 2 / 3 / 4 / bf16 bits) — then
+validates by **blind extrapolation** (predictions committed to this repo
+before the validation runs launch) and cashes in as a prescription: the
+crossover map of where *more parameters at fewer bits* beats *fewer
+parameters at more bits*. The model suite is named **TRIT** (one trit = one
 base-3 digit = 1.58 bits).
 
-This is a solo, self-funded research program designed to run on consumer
-hardware: the full grid fits on one RTX 3080/5090, with **≤ $100** of cloud
-compute reserved exclusively for the extrapolation anchors. That constraint is
-part of the contribution — every figure in this project regenerates end-to-end
-on a single desktop GPU.
+There is a second argument baked into the method: this is a solo,
+self-funded program designed to run on consumer hardware — the grid fits on
+a single desktop GPU, with **≤ $100** of cloud compute reserved exclusively
+for the extrapolation anchors. In a world of allocation-gated H100s, showing
+that a real scaling law can be fitted, validated, and released from one desk
+is itself part of the point: the same byte-scarcity that motivates the
+research also rations who gets to do research, and memory-optimal training
+is one of the few ways around both.
 
 - 📋 Research plan: [v0.3 — LOGOS-Local](research/logos-research-plan-v0.3-local.md) (active) · [v0.2 — full-scale program](research/logos-research-plan-v0.2.md) (reference design)
 - 🧪 First result: [Research Note 0 — micro-scale replication](docs/research-note-0-micro-p0.md)
@@ -134,7 +181,7 @@ python -m logos.cli train --manifest manifests/l0.yaml \
 - [x] Micro-P0 replication on real text (this page's figure)
 - [x] FineWeb-Edu 2.5B-token pretokenized corpus
 - [ ] L0 grid on the 3080 (running)
-- [ ] L1–L2 on the 5090 (hardware arrives Aug 25)
+- [ ] L1–L2 on the incoming RTX 5090
 - [ ] L3 blind anchors → arXiv preprint
 - [ ] L4–L5 → trit-lite + TRIT-Local suite on Hugging Face
 
