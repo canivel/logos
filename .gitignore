@@ -14,6 +14,7 @@ ops/alerts.log
 ops/audit.jsonl
 ops/pending_approvals/
 ops/digests/
-results/results.jsonl
+# results/results.jsonl is intentionally TRACKED: it is the scientific
+# record, and the blind-extrapolation protocol relies on git timestamps.
 validation/out/
 uv.lock
