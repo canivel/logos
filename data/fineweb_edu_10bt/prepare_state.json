@@ -1,0 +1,83 @@
+{
+  "docs_consumed": 1101312,
+  "shards": [
+    {
+      "file": "shard_00000.bin",
+      "tokens": 100185220,
+      "utf8_bytes": 403004492,
+      "docs": 83200
+    },
+    {
+      "file": "shard_00001.bin",
+      "tokens": 100114253,
+      "utf8_bytes": 404079248,
+      "docs": 85248
+    },
+    {
+      "file": "shard_00002.bin",
+      "tokens": 100212884,
+      "utf8_bytes": 403729320,
+      "docs": 86272
+    },
+    {
+      "file": "shard_00003.bin",
+      "tokens": 100061381,
+      "utf8_bytes": 403315872,
+      "docs": 84992
+    },
+    {
+      "file": "shard_00004.bin",
+      "tokens": 100171265,
+      "utf8_bytes": 402178967,
+      "docs": 82944
+    },
+    {
+      "file": "shard_00005.bin",
+      "tokens": 100268349,
+      "utf8_bytes": 403084593,
+      "docs": 83712
+    },
+    {
+      "file": "shard_00006.bin",
+      "tokens": 100053263,
+      "utf8_bytes": 403043478,
+      "docs": 83968
+    },
+    {
+      "file": "shard_00007.bin",
+      "tokens": 100002834,
+      "utf8_bytes": 401976359,
+      "docs": 84480
+    },
+    {
+      "file": "shard_00008.bin",
+      "tokens": 100202216,
+      "utf8_bytes": 403953833,
+      "docs": 83968
+    },
+    {
+      "file": "shard_00009.bin",
+      "tokens": 100325236,
+      "utf8_bytes": 405242431,
+      "docs": 86528
+    },
+    {
+      "file": "shard_00010.bin",
+      "tokens": 100087800,
+      "utf8_bytes": 403340247,
+      "docs": 85504
+    },
+    {
+      "file": "shard_00011.bin",
+      "tokens": 100075909,
+      "utf8_bytes": 403915363,
+      "docs": 86272
+    },
+    {
+      "file": "shard_00012.bin",
+      "tokens": 100231817,
+      "utf8_bytes": 404187502,
+      "docs": 84224
+    }
+  ]
+}

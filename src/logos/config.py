@@ -154,8 +154,14 @@ def make_model(
 # Model shape ladder (PLAN.md section 4). head_dim 64-128, GQA 4:1 throughout.
 # "micro" (~4.7M) is not part of the law-fitting grid: it exists for local
 # smoke experiments and the validation panel's end-to-end probes.
+# "3m"/"6m"/"12m" extend the ladder downward for the LOGOS-Local program
+# (research/logos-research-plan-v0.3-local.md): the law is fitted at
+# 3M-60M on local GPUs and validated by paid anchors one-two sizes up.
 LADDER: dict[str, dict[str, int]] = {
     "micro": dict(d_model=256, n_layers=6, n_heads=4, n_kv_heads=1),
+    "3m": dict(d_model=256, n_layers=4, n_heads=4, n_kv_heads=1),
+    "6m": dict(d_model=256, n_layers=8, n_heads=4, n_kv_heads=1),
+    "12m": dict(d_model=384, n_layers=7, n_heads=4, n_kv_heads=1, head_dim=96),
     "25m": dict(d_model=512, n_layers=8, n_heads=8, n_kv_heads=2),
     "60m": dict(d_model=640, n_layers=12, n_heads=8, n_kv_heads=2, head_dim=80),
     "125m": dict(d_model=768, n_layers=18, n_heads=12, n_kv_heads=3),
@@ -216,6 +222,9 @@ DEFAULT_LR_MULT: dict[Precision, float] = {
 # Base LR by ladder size (bf16 arm), ~mup-informed sqrt-width scaling from 3e-3@512.
 BASE_LR: dict[str, float] = {
     "micro": 3.0e-3,
+    "3m": 4.2e-3,
+    "6m": 4.2e-3,
+    "12m": 3.5e-3,
     "25m": 3.0e-3,
     "60m": 2.7e-3,
     "125m": 2.4e-3,
@@ -242,6 +251,12 @@ class RunSpec:
     total_tokens: int | None = None  # None -> tokens_per_param * n_nonemb
     kv_qat_bits: int | None = None  # P4 native KV-QAT arms
     gqa_ratio: int = 4  # P4 GQA-ratio arm uses 8
+    # Sequence/batch protocol. None -> TrainConfig defaults (2048 / 2^19).
+    # The LOGOS-Local grid freezes 1024 / 2^18 across ALL its arms (and its
+    # RunPod anchors) so local and anchor runs share one protocol; recorded
+    # here so the manifest is complete provenance for the run.
+    seq_len: int | None = None
+    batch_tokens: int | None = None
     tags: list[str] = field(default_factory=list)
     est_gpu_hours: float = 0.0
     est_cost_usd: float = 0.0
@@ -269,7 +284,12 @@ class RunSpec:
                 ]
             )
             lr = BASE_LR[self.size] * mult
-        return TrainConfig(lr=lr, total_tokens=total, seed=self.seed)
+        over: dict[str, Any] = {}
+        if self.seq_len is not None:
+            over["seq_len"] = self.seq_len
+        if self.batch_tokens is not None:
+            over["batch_tokens"] = self.batch_tokens
+        return TrainConfig(lr=lr, total_tokens=total, seed=self.seed, **over)
 
     # Fields that affect the science of a run. Cost estimates, tags, notes,
     # ops knobs AND phase are excluded: re-estimating budgets never changes
@@ -287,6 +307,8 @@ class RunSpec:
         "total_tokens",
         "kv_qat_bits",
         "gqa_ratio",
+        "seq_len",
+        "batch_tokens",
     )
 
     def config_hash(self) -> str:

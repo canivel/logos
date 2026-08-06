@@ -1,6 +1,6 @@
 version: 1
 generated_by: logos.manifest.generate
-git_sha: 15d64599ebf3a9c9dcc0b10401962bcd0504827e
+git_sha: 9131e58df043e492ade016c0ec0441eac062111f
 phase: p0
 meta:
   purpose: local micro-P0 (panel artifacts, not grid data)
@@ -18,6 +18,8 @@ runs:
   total_tokens: 4194304
   kv_qat_bits: null
   gqa_ratio: 4
+  seq_len: 256
+  batch_tokens: 16384
   tags:
   - local-smoke
   - byte-level
@@ -37,6 +39,8 @@ runs:
   total_tokens: 4194304
   kv_qat_bits: null
   gqa_ratio: 4
+  seq_len: 256
+  batch_tokens: 16384
   tags:
   - local-smoke
   - byte-level
@@ -56,6 +60,8 @@ runs:
   total_tokens: 4194304
   kv_qat_bits: null
   gqa_ratio: 4
+  seq_len: 256
+  batch_tokens: 16384
   tags:
   - local-smoke
   - byte-level
@@ -75,6 +81,8 @@ runs:
   total_tokens: 4194304
   kv_qat_bits: null
   gqa_ratio: 4
+  seq_len: 256
+  batch_tokens: 16384
   tags:
   - local-smoke
   - byte-level
@@ -94,6 +102,8 @@ runs:
   total_tokens: 4194304
   kv_qat_bits: null
   gqa_ratio: 4
+  seq_len: 256
+  batch_tokens: 16384
   tags:
   - local-smoke
   - byte-level
@@ -113,6 +123,8 @@ runs:
   total_tokens: 4194304
   kv_qat_bits: null
   gqa_ratio: 4
+  seq_len: 256
+  batch_tokens: 16384
   tags:
   - local-smoke
   - byte-level
@@ -132,6 +144,8 @@ runs:
   total_tokens: 4194304
   kv_qat_bits: null
   gqa_ratio: 4
+  seq_len: 256
+  batch_tokens: 16384
   tags:
   - local-smoke
   - byte-level

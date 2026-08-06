@@ -1,0 +1,105 @@
+version: 1
+generated_by: logos.manifest.generate
+git_sha: 9131e58df043e492ade016c0ec0441eac062111f
+phase: l4
+meta:
+  phase: l4
+  purpose: KV in the budget (RQ5, reduced)
+  gpu: '5090'
+  eval_jobs:
+    posthoc_kv_sweep:
+      checkpoints: runs/**/ckpt_latest.pt for sizes 12m,25m,60m
+      kv_bits:
+      - 8
+      - 4
+      - 3
+      - 2
+      evals:
+      - bpb_val1
+      - bpb_val2
+      - ruler_lite_1k_8k
+runs:
+- run_id: l-12m-1.58-kv8-tp80-s0
+  phase: l4
+  size: 12m
+  precision: '1.58'
+  tokens_per_param: 80.0
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: null
+  total_tokens: 990904320
+  kv_qat_bits: 8
+  gqa_ratio: 4
+  seq_len: 1024
+  batch_tokens: 262144
+  tags:
+  - gpu-5090
+  - kv_qat
+  est_gpu_hours: 4.89
+  est_cost_usd: 0.0
+  max_wall_clock_mult: 3.0
+  notes: ''
+- run_id: l-12m-bf16-kv8-tp80-s0
+  phase: l4
+  size: 12m
+  precision: bf16
+  tokens_per_param: 80.0
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: null
+  total_tokens: 990904320
+  kv_qat_bits: 8
+  gqa_ratio: 4
+  seq_len: 1024
+  batch_tokens: 262144
+  tags:
+  - gpu-5090
+  - kv_qat
+  est_gpu_hours: 3.67
+  est_cost_usd: 0.0
+  max_wall_clock_mult: 3.0
+  notes: ''
+- run_id: l-12m-1.58-kv4-tp80-s0
+  phase: l4
+  size: 12m
+  precision: '1.58'
+  tokens_per_param: 80.0
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: null
+  total_tokens: 990904320
+  kv_qat_bits: 4
+  gqa_ratio: 4
+  seq_len: 1024
+  batch_tokens: 262144
+  tags:
+  - gpu-5090
+  - kv_qat
+  est_gpu_hours: 4.89
+  est_cost_usd: 0.0
+  max_wall_clock_mult: 3.0
+  notes: ''
+- run_id: l-12m-bf16-kv4-tp80-s0
+  phase: l4
+  size: 12m
+  precision: bf16
+  tokens_per_param: 80.0
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: null
+  total_tokens: 990904320
+  kv_qat_bits: 4
+  gqa_ratio: 4
+  seq_len: 1024
+  batch_tokens: 262144
+  tags:
+  - gpu-5090
+  - kv_qat
+  est_gpu_hours: 3.67
+  est_cost_usd: 0.0
+  max_wall_clock_mult: 3.0
+  notes: ''

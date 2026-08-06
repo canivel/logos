@@ -97,6 +97,8 @@ def arm_specs(total_tokens: int) -> list[RunSpec]:
                     seed=seed,
                     lr=BASE_LR["micro"] * DEFAULT_LR_MULT[prec],
                     total_tokens=total_tokens,
+                    seq_len=SEQ,
+                    batch_tokens=BATCH_TOKENS,
                     tags=["local-smoke", "byte-level"],
                     notes="micro-P0 on real text; excluded from law fitting",
                 )

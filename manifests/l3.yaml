@@ -1,0 +1,125 @@
+version: 1
+generated_by: logos.manifest.generate
+git_sha: 9131e58df043e492ade016c0ec0441eac062111f
+phase: l3
+meta:
+  phase: l3
+  purpose: blind extrapolation anchors (RQ4)
+  gpu: runpod-1xH100
+  hard_cap_usd: 100
+  prediction_protocol: freeze fitted law + commit predictions before launch
+  stretch_anchors:
+  - 250m-1.58-tp20-s0 (~19 H100-h)
+  - 250m-bf16-tp20-s0 (~14 H100-h)
+  - launch only with spot savings or budget beyond $100
+runs:
+- run_id: l-125m-1.58-tp20-s0
+  phase: l3
+  size: 125m
+  precision: '1.58'
+  tokens_per_param: 20.0
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: null
+  total_tokens: 2548039680
+  kv_qat_bits: null
+  gqa_ratio: 4
+  seq_len: 1024
+  batch_tokens: 262144
+  tags:
+  - gpu-h100
+  - anchor
+  - blind
+  est_gpu_hours: 3.37
+  est_cost_usd: 9.44
+  max_wall_clock_mult: 3.0
+  notes: ''
+- run_id: l-125m-1.58-tp80-s0
+  phase: l3
+  size: 125m
+  precision: '1.58'
+  tokens_per_param: 80.0
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: null
+  total_tokens: 10192158720
+  kv_qat_bits: null
+  gqa_ratio: 4
+  seq_len: 1024
+  batch_tokens: 262144
+  tags:
+  - gpu-h100
+  - anchor
+  - blind
+  est_gpu_hours: 13.48
+  est_cost_usd: 37.75
+  max_wall_clock_mult: 3.0
+  notes: ''
+- run_id: l-125m-bf16-tp20-s0
+  phase: l3
+  size: 125m
+  precision: bf16
+  tokens_per_param: 20.0
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: null
+  total_tokens: 2548039680
+  kv_qat_bits: null
+  gqa_ratio: 4
+  seq_len: 1024
+  batch_tokens: 262144
+  tags:
+  - gpu-h100
+  - anchor
+  - blind
+  est_gpu_hours: 2.53
+  est_cost_usd: 7.08
+  max_wall_clock_mult: 3.0
+  notes: ''
+- run_id: l-125m-bf16-tp80-s0
+  phase: l3
+  size: 125m
+  precision: bf16
+  tokens_per_param: 80.0
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: null
+  total_tokens: 10192158720
+  kv_qat_bits: null
+  gqa_ratio: 4
+  seq_len: 1024
+  batch_tokens: 262144
+  tags:
+  - gpu-h100
+  - anchor
+  - blind
+  est_gpu_hours: 10.11
+  est_cost_usd: 28.31
+  max_wall_clock_mult: 3.0
+  notes: ''
+- run_id: l-125m-4-tp20-s0
+  phase: l3
+  size: 125m
+  precision: '4'
+  tokens_per_param: 20.0
+  seed: 0
+  ffn_type: swiglu
+  lr: null
+  lr_mult_override: null
+  total_tokens: 2548039680
+  kv_qat_bits: null
+  gqa_ratio: 4
+  seq_len: 1024
+  batch_tokens: 262144
+  tags:
+  - gpu-h100
+  - anchor
+  - blind
+  est_gpu_hours: 3.37
+  est_cost_usd: 9.44
+  max_wall_clock_mult: 3.0
+  notes: ''

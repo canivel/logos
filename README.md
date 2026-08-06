@@ -1,57 +1,148 @@
-# LOGOS
+# LOGOS · memory-optimal scaling laws for natively low-bit LLMs
 
-**Memory-optimal scaling laws for natively low-bit LLMs.** Given an inference
-memory budget in bytes, how do you allocate parameters (N), weight precision
-(b_w), KV precision (b_kv), and training tokens (D) to maximize quality?
-LOGOS fits that law empirically for QAT-from-scratch (BitNet-style) models,
-validates it by extrapolation, and cashes it in with a capstone model at a
-real device budget. Model suite: **TRIT** (one trit = 1.58 bits).
+**Chinchilla tells you how to spend a compute budget. Nobody has answered the
+deployment version: given an inference *memory budget in bytes*, how should
+you split it between parameter count (N), weight precision (b_w), KV-cache
+precision (b_kv), and training tokens (D)?**
 
-Full research plan: [PLAN.md](PLAN.md). Sibling project:
-[KAOS](https://github.com/canivel/kaos) runs the ops (Section 13 of the plan);
-the science stays human.
+LOGOS answers that empirically for natively low-bit models — quantization-aware
+training from scratch, BitNet-style — by training a controlled grid across five
+weight precisions (1.58 / 2 / 3 / 4 / bf16 bits), fitting competing functional
+forms L(N, D, b_w), locating the crossovers where *more parameters at fewer
+bits* beats *fewer parameters at more bits*, and validating the fitted law by
+**blind extrapolation**: predictions are committed to this repo before the
+validation runs launch. The model suite is named **TRIT** (one trit = one
+base-3 digit = 1.58 bits).
 
-## Layout
+This is a solo, self-funded research program designed to run on consumer
+hardware: the full grid fits on one RTX 3080/5090, with **≤ $100** of cloud
+compute reserved exclusively for the extrapolation anchors. That constraint is
+part of the contribution — every figure in this project regenerates end-to-end
+on a single desktop GPU.
+
+- 📋 Research plan: [v0.3 — LOGOS-Local](research/logos-research-plan-v0.3-local.md) (active) · [v0.2 — full-scale program](research/logos-research-plan-v0.2.md) (reference design)
+- 🧪 First result: [Research Note 0 — micro-scale replication](docs/research-note-0-micro-p0.md)
+- 🧰 Methods: [methodology.md](docs/methodology.md)
+- ✅ Verification: [validation panel, round 1 report](docs/validation-panel-round-1.md) — 11 falsifiable probes, 49 sha256-locked kill gates
+
+---
+
+## First result (micro-P0, replication tier)
+
+Full precision ladder trained end-to-end on real text at micro scale
+(~4.7M non-embedding params, byte-level, RTX 3080):
+
+![micro-P0 loss curves](docs/figures/local_p0_loss_curves.png)
+
+| Arm | Val BPB (mean) | Packed body | vs bf16 |
+|-----|---------------|-------------|---------|
+| ternary (1.58-bit) | **2.683** | 1.36 MB | −0.014 BPB, within noise |
+| 2-bit | 2.733 | 1.55 MB | |
+| 3-bit | 2.630 | 2.15 MB | |
+| 4-bit | 2.671 | 2.75 MB | |
+| bf16 | 2.697 | 9.77 MB | |
+
+In the deeply undertrained regime (D/N ≈ 0.9), **ternary matches bf16 at 7.2×
+smaller packed footprint** — reproducing the known qualitative dynamic
+(Ouyang et al.: low-bit favors undertrained models) that the main grid will
+map quantitatively along the tokens/param axis up to 320×. Gap verdicts are
+gated by a 2σ seed-noise discipline enforced mechanically by the results
+store. Details and caveats: [Research Note 0](docs/research-note-0-micro-p0.md).
+
+## The program at a glance
+
+| Phase | Question | Where | Cost |
+|-------|----------|-------|------|
+| L0 | Does our stack reproduce known ternary-vs-bf16 dynamics, and what is the seed-noise floor? | RTX 3080, now | $0 |
+| L1 | How does the low-bit gap evolve with tokens/param (20×→320×)? | 3080 → 5090 | $0 |
+| L2 | The law: L(N, D, b_w) over 3M–60M × 5 precisions; iso-memory frontier; b*(M, D) phase diagram | RTX 5090 | $0 |
+| L3 | Does the law predict 125M *before* we train it? (blind, timestamped) | RunPod 1×H100 | **≤ $100** |
+| L4 | When does the KV cache dominate the byte budget? | local, mostly eval | $0 |
+| L5 | Does the law's prescribed model beat same-footprint baselines? (**trit-lite**) | RTX 5090 | $0 |
+
+~830 local GPU-hours total. Everything is manifest-driven: all ~145 runs are
+pre-specified in [`manifests/`](manifests/) with per-run cost estimates, and
+nothing launches by hand twice.
+
+## How the claims stay honest
+
+1. **One variable moves at a time.** Architecture, tokenizer, data, data
+   *order* (`data_seed=1337` project-wide), optimizer, and schedule are frozen
+   across arms; the linear-layer precision (and its P1-measured LR multiplier)
+   is the only difference.
+2. **N means non-embedding parameters**, and byte budgets at this scale are
+   body-byte budgets — the tied 32k bf16 embedding is reported separately and
+   dominates small artifacts (84% of a ternary 25M export). Stated everywhere.
+3. **Loss (bits-per-byte) is the fitting target; benchmarks are the
+   validator.** Two disjoint held-out sets.
+4. **No gap is claimed below 2σ** of its size class's measured seed noise.
+5. **Fit forms compete** (effective-capacity vs additive-degradation), selected
+   by leave-one-size-out extrapolation — never in-sample fit.
+6. **A separate validation panel** re-derives every load-bearing quantity from
+   first principles (independent numpy quantizer implementations, hand-derived
+   STE gradients, an independent bit-stream unpacker, hidden-ground-truth fit
+   recovery) behind pre-registered, sha256-locked kill gates. Round 1 caught
+   6 real defects before any result was published: [report](docs/validation-panel-round-1.md).
+
+Illustration of the fitting machinery on synthetic ground truth (the demo
+recovers hidden law parameters within 4%; real-data versions of these figures
+land with L2):
+
+| Iso-memory frontier (demo) | b*(M, D) phase diagram (demo) |
+|---|---|
+| ![frontier](docs/figures/iso_memory_frontier.png) | ![phase diagram](docs/figures/phase_diagram.png) |
+
+## Repository map
 
 | Path | What |
 |------|------|
-| `src/logos/config.py` | The contract: `Precision`, `ModelConfig`, `TrainConfig`, `RunSpec`, the shape ladder |
-| `src/logos/quant/` | The precision ladder: BitLinear (ternary absmean), ParetoQ-style 2/3/4-bit per-group int, WxA8 activations, STE |
-| `src/logos/model/` | Llama-style decoder (RMSNorm, RoPE, GQA 4:1, tied 32k embeddings, subln on quantized arms, optional KV-QAT) |
-| `src/logos/data/` | FineWeb-Edu → 32k-tokenized uint16 shards; deterministic fixed-order loader (same data order in every arm) |
-| `src/logos/train/` | Trainer: cosine schedule, per-precision LR rule, 30-min + SIGTERM checkpointing, exact resume, divergence kill |
-| `src/logos/eval/` | Bits-per-byte runner (the fitting target) + pinned lm-eval-harness wrapper |
-| `src/logos/export/` | Packed formats (i2_s-style ternary, bit-packed 2/3/4), `.lpack` artifacts, GGUF hook, logit-parity gate |
-| `src/logos/fitting/` | Forms A/B/C, Huber-on-log multi-start L-BFGS, LOSO selection, bootstrap CIs, b*(M,D) phase diagram, iso-memory frontier |
-| `src/logos/manifest/` | Versioned run manifests for P0–P5, queue launcher, hard-capped budget ledger |
-| `src/logos/results/` | Append-only results store, seed-sigma / 2-sigma gap discipline, manifest↔result hash checks |
-| `manifests/` | Generated phase manifests (`python -m logos.manifest.generate`) |
-| `ops/` | KAOS agent tier definitions (Monitor / Eval / Launcher), audit journal, cron fallbacks, arXiv scoop watch |
-| `validation/` | **The validation panel**: falsifiable probes with pre-registered kill gates that verify benchmarks and results |
-| `analysis/` | Fitting demo / notebook skeletons |
-| `tests/` | Unit tests for everything above |
+| `src/logos/config.py` | The frozen contract: precision ladder, model shapes (3M–1.5B), run specs with science-bearing config hashes |
+| `src/logos/quant/` | BitLinear (ternary absmean, per BitNet b1.58) · ParetoQ-style 2/3/4-bit per-group LSQ · WxA8 activations · STE |
+| `src/logos/model/` | Llama-style decoder: RMSNorm, RoPE, GQA 4:1, tied embeddings, subln on quantized arms, optional KV-QAT |
+| `src/logos/data/` | FineWeb-Edu → uint16 shards; deterministic fixed-order loader with exact resume |
+| `src/logos/train/` | Spot-hardened trainer: atomic checkpoints, SIGTERM handling, bit-exact resume, grad accumulation, divergence kill |
+| `src/logos/eval/` | Bits-per-byte runner · pinned lm-eval-harness wrapper |
+| `src/logos/export/` | Packed formats (i2_s ternary, exact-width int) · `.lpack` artifacts · GGUF hook · bitwise parity gates |
+| `src/logos/fitting/` | Forms A/B/C · Huber-on-log multi-start L-BFGS · LOSO selection · bootstrap CIs · prescriptions & figures |
+| `src/logos/manifest/` | Versioned run manifests (P- and L-series) · queue launcher · hard-capped budget ledger |
+| `ops/` | KAOS agent tiers (monitor / eval / launcher) with audit journal, plus cron fallbacks — agents run the toil, humans run the experiment |
+| `validation/` | The falsifiable-probe panel (`logos-validate --all`) |
+| `docs/` · `research/` | Research notes, methodology, plans, figures |
 
-## Quickstart
+## Reproduce
 
 ```bash
+git clone https://github.com/canivel/logos && cd logos
 uv venv --system-site-packages && uv pip install -e ".[dev]" --no-deps
-python -m pytest -q                      # full unit suite
-python scripts/smoke_train.py --out runs/smoke   # tiny end-to-end train, all arms
-python -m logos.manifest.generate --out manifests/
-logos-validate --all                     # run the validation panel
+
+python -m pytest -q                          # ~100 unit tests
+python -m validation.panel --all             # the full verification round
+python scripts/local_p0.py                   # micro-P0 on real text (~5 min on a GPU)
+
+# the real program
+python -m logos.cli data prepare --out data/fineweb_edu_10bt \
+    --dataset-config sample-10BT --tokenizer TinyLlama/TinyLlama_v1.1 \
+    --target-tokens 2500000000
+python -m logos.cli train --manifest manifests/l0.yaml \
+    --run-id 3m-1.58-tp20-s0 --data-dir data/fineweb_edu_10bt --runs-dir runs/l0
 ```
 
-Real runs are defined only by manifests (`logos train --manifest manifests/p0.yaml --run-id ...`);
-nothing is launched by hand twice.
+## Status
 
-## The rules that keep the law clean
+- [x] Full stack implemented and unit-tested (~100 tests)
+- [x] Validation panel round 1: 11/11 probes ACCEPT
+- [x] Micro-P0 replication on real text (this page's figure)
+- [x] FineWeb-Edu 2.5B-token pretokenized corpus
+- [ ] L0 grid on the 3080 (running)
+- [ ] L1–L2 on the 5090 (hardware arrives Aug 25)
+- [ ] L3 blind anchors → arXiv preprint
+- [ ] L4–L5 → trit-lite + TRIT-Local suite on Hugging Face
 
-1. One variable moves at a time — precision is the only difference between arms.
-2. N means non-embedding parameters.
-3. Loss (BPB) is the fitting target; benchmarks are the validator.
-4. Any reported gap must exceed 2σ for its size class.
-5. Same data order everywhere (`data_seed=1337`, project-wide).
-6. Comparability beats per-arm maximum performance.
-7. Fit forms compete; selection by held-out extrapolation, never in-sample fit.
+## References
 
-See PLAN.md §3. The validation panel enforces these mechanically.
+BitNet b1.58 (Ma et al. 2024; 2B4T report 2025) · ParetoQ (Liu et al. 2025) ·
+Precision scaling laws (Kumar et al. 2024) · Low-bit favors undertrained
+(Ouyang et al. 2024) · Spectra (Kaushal et al. 2024) · Chinchilla (Hoffmann
+et al. 2022) · Ops layer: [KAOS](https://github.com/canivel/kaos)
+
+Apache-2.0 · Danilo Canivel ([@canivel](https://github.com/canivel)), 2026
