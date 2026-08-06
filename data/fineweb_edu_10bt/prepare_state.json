@@ -1,5 +1,5 @@
 {
-  "docs_consumed": 1101312,
+  "docs_consumed": 1269760,
   "shards": [
     {
       "file": "shard_00000.bin",
@@ -78,6 +78,18 @@
       "tokens": 100231817,
       "utf8_bytes": 404187502,
       "docs": 84224
+    },
+    {
+      "file": "shard_00013.bin",
+      "tokens": 100270215,
+      "utf8_bytes": 404826969,
+      "docs": 83712
+    },
+    {
+      "file": "shard_00014.bin",
+      "tokens": 100104831,
+      "utf8_bytes": 403299727,
+      "docs": 84736
     }
   ]
 }
