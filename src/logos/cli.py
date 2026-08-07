@@ -40,6 +40,11 @@ def _configure_data(p: argparse.ArgumentParser) -> None:
     prep = sub.add_parser("prepare", help="FineWeb-Edu -> tokenized shards")
     prep.add_argument("--out", required=True, help="output shard directory")
     prep.add_argument("--synthetic", action="store_true", help="deterministic pseudo-text, no network")
+    prep.add_argument(
+        "--extend", action="store_true",
+        help="grow the TRAIN split of an existing dir to --target-tokens, "
+        "keeping val sets byte-identical (skips the frozen val docs)",
+    )
     prep.add_argument("--dataset", default="HuggingFaceFW/fineweb-edu")
     prep.add_argument("--dataset-config", default="sample-350BT")
     prep.add_argument("--tokenizer", default="mistralai/Mistral-7B-v0.1")
@@ -54,9 +59,15 @@ def _configure_data(p: argparse.ArgumentParser) -> None:
 
 
 def _run_data(args: argparse.Namespace) -> int:
-    from logos.data.prepare import prepare_fineweb, prepare_synthetic
+    from logos.data.prepare import extend_fineweb, prepare_fineweb, prepare_synthetic
 
     if args.data_cmd == "prepare":
+        if args.extend:
+            if not args.target_tokens:
+                raise SystemExit("--extend requires --target-tokens")
+            index = extend_fineweb(args.out, target_tokens=args.target_tokens)
+            print(json.dumps({k: index[k] for k in ("dataset", "tokenizer", "total_tokens")}))
+            return 0
         if args.synthetic:
             index = prepare_synthetic(
                 args.out,

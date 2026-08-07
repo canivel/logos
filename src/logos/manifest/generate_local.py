@@ -121,6 +121,35 @@ def gen_l1() -> list[RunSpec]:
     return runs
 
 
+def gen_l1ctl() -> list[RunSpec]:
+    """LR-confound control arms (kimi3 review F1): fully cross precision x LR
+    at the crossover cells. bf16 at the ternary 2x multiplier ({3m,6m} x
+    {20x,80x} x 2 seeds = 8 runs) and ternary at 1x ({3m} x {20x,80x} x 2
+    seeds = 4 runs). If bf16@2xLR closes the 20x gap, the headline changes.
+    ~15 GPU-h on the 3080; runs before any gap result leaves the repo."""
+    runs = []
+    for size in ("3m", "6m"):
+        for tpp in (20, 80):
+            for seed in (0, 1):
+                runs.append(
+                    _spec(
+                        size, PBF, tpp, seed, "3080", "l1ctl", ["lr_control"],
+                        run_id=f"l-ctl-{size}-bf16-x2-tp{tpp}-s{seed}",
+                        lr_mult_override=2.0,
+                    )
+                )
+    for tpp in (20, 80):
+        for seed in (0, 1):
+            runs.append(
+                _spec(
+                    "3m", P158, tpp, seed, "3080", "l1ctl", ["lr_control"],
+                    run_id=f"l-ctl-3m-1.58-x1-tp{tpp}-s{seed}",
+                    lr_mult_override=1.0,
+                )
+            )
+    return runs
+
+
 def gen_l2() -> list[RunSpec]:
     """The grid on the 5090 — new rows only; reused L0/L1 rows are listed in
     meta (39 new runs)."""
@@ -193,6 +222,19 @@ def main(argv: list[str] | None = None) -> int:
     phases = {
         "l0": (gen_l0(), {"purpose": "replication + noise floor (RQ1)", "gpu": "3080"}),
         "l1": (gen_l1(), {"purpose": "gap dynamics + protocol lock (RQ2)", "gpu": "3080/5090"}),
+        "l1ctl": (
+            gen_l1ctl(),
+            {
+                "purpose": "LR-confound controls (kimi3 F1): bf16@2xLR + ternary@1xLR "
+                "at the L0 crossover cells",
+                "gpu": "3080",
+                "data_dir": "data/fineweb_edu_2p5b_view",
+                "data_note": "MUST train on the frozen 2.5B view (hardlinked "
+                "snapshot) so controls share the exact corpus + window "
+                "permutation universe of the L0 cells they compare against; "
+                "the live dir is being extended for L1+.",
+            },
+        ),
         "l2": (gen_l2(), {"purpose": "the grid (RQ3)", "gpu": "5090", "reused_runs": gen_l2.reused}),  # type: ignore[attr-defined]
         "l3": (
             gen_l3(),

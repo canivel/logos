@@ -81,15 +81,34 @@ def _objective(
     bits: np.ndarray,
     log_obs: np.ndarray,
     delta: float,
+    weights: np.ndarray | None = None,
 ) -> float:
     params = form.to_natural(theta)
     pred = form.predict(params, N, D, bits)
     if not np.all(np.isfinite(pred)) or np.any(pred <= 0):
         return _BAD
-    val = float(np.mean(huber(np.log(pred) - log_obs, delta)))
+    r = huber(np.log(pred) - log_obs, delta)
+    val = float(np.average(r, weights=weights))
     if form.has_penalty:
         val += form.penalty(params)
     return val if np.isfinite(val) else _BAD
+
+
+def inverse_variance_weights(df: pd.DataFrame, floor_frac: float = 0.25) -> np.ndarray:
+    """Per-row 1/sigma^2 weights from measured seed noise (kimi3 review F6).
+
+    sigma per (size, precision, tokens) cell from the RQ1 table; single-seed
+    cells inherit the mean multi-seed sigma of their size (or the global mean).
+    Sigmas are floored at `floor_frac` x the global mean so one lucky cell
+    cannot dominate the objective. Normalized to mean 1 (keeps the Huber
+    delta's meaning and loss magnitudes comparable to the unweighted fit)."""
+    cell = df.groupby(["size", "precision", "tokens"])["bpb"].transform("std")
+    size_mean = df.assign(_s=cell).groupby("size")["_s"].transform("mean")
+    global_mean = float(np.nanmean(cell))
+    sigma = cell.fillna(size_mean).fillna(global_mean).to_numpy(dtype=float)
+    sigma = np.maximum(sigma, floor_frac * global_mean)
+    w = 1.0 / sigma**2
+    return w / w.mean()
 
 
 def fit_form(
@@ -103,6 +122,7 @@ def fit_form(
     top_k: int = 8,
     max_iter: int = 500,
     extra_starts: list[dict[str, float]] | None = None,
+    weights: np.ndarray | None = None,
 ) -> FitResult:
     """Multi-start L-BFGS-B (PLAN.md s8). Huber (delta=1e-3 default) on
     log L_pred - log L_obs. Two-stage for speed: a coarse pass (`coarse_iter`
@@ -126,7 +146,10 @@ def fit_form(
         inits = np.vstack([warm, inits])
         n_warm = len(warm)
 
-    args = (form, N, D, bits, log_obs, huber_delta)
+    if weights is not None:
+        weights = np.asarray(weights, dtype=float)
+        assert weights.shape == log_obs.shape, "weights must be per-row"
+    args = (form, N, D, bits, log_obs, huber_delta, weights)
     coarse = [
         minimize(_objective, x0, args=args, method="L-BFGS-B", bounds=bounds,
                  options={"maxiter": coarse_iter})

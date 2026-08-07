@@ -230,4 +230,98 @@ def prepare_fineweb(
         fname = f"{name}.bin"
         arr.tofile(out / fname)
         val[name] = {"file": fname, "tokens": int(arr.size), "utf8_bytes": v_bytes, "docs": v_docs}
+    # Record the val block's stream position so extend_fineweb can skip it.
+    state["val_docs"] = sum(v["docs"] for v in val.values())
+    state["train_docs_pre_val"] = state["docs_consumed"]
+    _write_json(state_path, state)
     return snapshot(val)
+
+
+def extend_fineweb(
+    out_dir: str | Path,
+    target_tokens: int,
+    batch_docs: int = 256,
+) -> dict:
+    """Grow the TRAIN split of an existing prepared dir to `target_tokens`
+    while keeping val1/val2 byte-identical.
+
+    Leak guard: the val sets were cut from the stream immediately after the
+    original train cut, so a naive re-run of prepare_fineweb would consume
+    those exact documents into training. This resumes the stream at
+    train_docs_pre_val + val_docs + train_docs_post_val — i.e. skipping the
+    frozen val block — and appends new train shards after it. Existing
+    shards, val bins, and their byte counts are untouched; only new shards
+    and total_tokens change in index.json.
+
+    Protocol note (kimi3 review F2): every (size, D/N) cell must be
+    internally consistent — never mix corpus versions within a cell. Extend
+    only BETWEEN phases, before any run of the next phase starts.
+    """
+    from datasets import load_dataset
+    from transformers import AutoTokenizer
+
+    out = Path(out_dir)
+    index = json.loads((out / INDEX_NAME).read_text())
+    state = json.loads((out / STATE_NAME).read_text())
+    if "val_docs" not in state:  # dirs prepared before this function existed
+        state["val_docs"] = sum(v["docs"] for v in index["val"].values())
+        state["train_docs_pre_val"] = state["docs_consumed"] - state.get(
+            "train_docs_post_val", 0
+        )
+    post = state.get("train_docs_post_val", 0)
+    skip = state["train_docs_pre_val"] + state["val_docs"] + post
+
+    tok = AutoTokenizer.from_pretrained(index["tokenizer"])
+    tok.model_max_length = int(1e9)
+    eos_id = index["eos_id"]
+    shards: list[dict] = index["shards"]
+    trained = sum(s["tokens"] for s in shards)
+    if trained >= target_tokens:
+        return index
+
+    ds = load_dataset(index["dataset"], name=index["dataset_config"], split="train", streaming=True)
+    it = iter(ds)
+    for _ in range(skip):
+        next(it)
+
+    buf: list[np.ndarray] = []
+    buf_tokens = buf_bytes = buf_docs = 0
+
+    def flush() -> None:
+        nonlocal buf, buf_tokens, buf_bytes, buf_docs, trained
+        arr = np.concatenate(buf)
+        fname = f"shard_{len(shards):05d}.bin"
+        arr.tofile(out / fname)
+        shards.append(
+            {"file": fname, "tokens": int(arr.size), "utf8_bytes": buf_bytes, "docs": buf_docs}
+        )
+        trained += int(arr.size)
+        state["train_docs_post_val"] = state.get("train_docs_post_val", 0) + buf_docs
+        state["docs_consumed"] += buf_docs
+        buf, buf_tokens, buf_bytes, buf_docs = [], 0, 0, 0
+        index["total_tokens"] = trained
+        _write_json(out / INDEX_NAME, index)
+        _write_json(out / STATE_NAME, state)
+
+    done = False
+    while not done:
+        texts = []
+        for _ in range(batch_docs):
+            try:
+                texts.append(next(it)["text"])
+            except StopIteration:
+                done = True
+                break
+        if texts:
+            arrs, nbytes = _encode_batch(tok, texts, eos_id)
+            buf.extend(arrs)
+            buf_bytes += nbytes
+            buf_docs += len(texts)
+            buf_tokens += sum(a.size for a in arrs)
+            if buf_tokens >= 100_000_000:
+                flush()
+        if trained + buf_tokens >= target_tokens:
+            done = True
+    if buf:
+        flush()
+    return index

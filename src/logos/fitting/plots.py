@@ -118,9 +118,16 @@ def plot_phase_diagram(
     D_grid: np.ndarray,
     bits: tuple[float, ...] = DEFAULT_BITS,
     measured_bytes: WeightBytesFn | None = None,
+    iso_flops: bool = True,
 ) -> str:
     """b*(M, D) heatmap (RQ3). b* is ordered, so a single-hue sequential ramp
-    (light -> dark) with one discrete step per bit width."""
+    (light -> dark) with one discrete step per bit width.
+
+    iso_flops (kimi3 review F4): overlays dashed iso-training-compute
+    contours, C ~= 6*N*(M,b*)*D with N* = M*8/b*. At fixed bytes the
+    big-N-low-bit corner costs multiples of the small-N-high-bit corner in
+    training FLOPs; the prescription is deployment-optimal, and this overlay
+    is the honest disclosure of what it costs to train."""
     bstar = phase_diagram(fit, M_grid, D_grid, bits, measured_bytes=measured_bytes)
     opts = sorted(bits)
     idx = np.searchsorted(opts, bstar)  # ordered category index
@@ -137,6 +144,16 @@ def plot_phase_diagram(
     cbar.ax.set_yticklabels([ARM_STYLE.get(b, (None, None, f"{b:g}-bit"))[2] for b in opts],
                             color=_INK)
     cbar.outline.set_visible(False)
+    if iso_flops:
+        MM, DD = np.meshgrid(np.asarray(M_grid, dtype=float), np.asarray(D_grid, dtype=float),
+                             indexing="ij")
+        C = 6.0 * (MM * 8.0 / bstar) * DD  # training FLOPs at the prescribed arm
+        levels = 10.0 ** np.arange(
+            np.ceil(np.log10(C.min())), np.floor(np.log10(C.max())) + 1
+        )
+        cs = ax.contour(DD, MM / GB, C, levels=levels, colors=_MUTED,
+                        linewidths=1.0, linestyles="--")
+        ax.clabel(cs, fmt=lambda v: f"{v:.0e} FLOPs", fontsize=7, colors=_MUTED)
     for side in ("top", "right"):
         ax.spines[side].set_visible(False)
     ax.tick_params(colors=_MUTED, labelcolor=_INK)
