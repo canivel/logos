@@ -67,11 +67,32 @@ Findings:
   closes the gap, the headline becomes an LR effect, and this note will say
   so in §5.
 
-## §5 — Control-arm verdict (pending)
+## §5 — Control-arm verdict: the crossover survives the LR cross
 
-*This section is written by the l1ctl results: bf16@2×LR at {3m, 6m} ×
-{20×, 80×} × 2 seeds, ternary@1×LR at 3m × {20×, 80×} × 2 seeds, all on the
-identical frozen corpus slice as the cells above.*
+12 control runs (l1ctl manifest), identical frozen corpus slice, fully
+crossing precision × LR multiplier at the contested cells (val BPB means):
+
+| Cell | ternary@2× | ternary@1× | bf16@1× | bf16@2× |
+|------|-----------:|-----------:|--------:|--------:|
+| 3m @20× | **2.0530** | 2.1185 | 2.1217 | 2.1617 |
+| 3m @80× | 1.6381 | 1.6532 | **1.6204** | 1.6460 |
+| 6m @20× | **1.8718** | — | 1.9089 | 1.9297 |
+| 6m @80× | 1.4885 | — | **1.3210** | 1.3462 |
+
+Three conclusions:
+
+1. **The 20× ternary win is not an LR artifact.** Giving bf16 the 2×
+   multiplier makes it *worse* in every cell tested (+0.02 to +0.04 BPB),
+   both sizes, both D/N points. The alternative explanation is dead.
+2. **Ternary genuinely requires its larger steps** — at 1×LR it loses its
+   20× advantage entirely (2.119 ≈ bf16's 2.122). The BitNet 2× prior is
+   empirically confirmed rather than assumed, at both 20× and 80× (the
+   single-seed hint that 1× might win at 80× washed out with the second
+   seed: 1.653 vs 1.638).
+3. **Per-arm best LRs are bf16→1×, ternary→2×, and best-vs-best is exactly
+   the main table** — so every significant L0 claim carries over unchanged
+   under the tuned-per-arm comparison a referee would demand. The L1 probes
+   still refine the multipliers for {2, 3, 4}-bit before the grid freezes.
 
 ## Three methodological findings worth recording
 
