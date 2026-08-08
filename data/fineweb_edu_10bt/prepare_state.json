@@ -1,5 +1,5 @@
 {
-  "docs_consumed": 2110976,
+  "docs_consumed": 9632101,
   "shards": [
     {
       "file": "shard_00000.bin",
@@ -151,5 +151,8 @@
       "utf8_bytes": 389902566,
       "docs": 80384
     }
-  ]
+  ],
+  "val_docs": 40000,
+  "train_docs_pre_val": 2110976,
+  "train_docs_post_val": 7521125
 }

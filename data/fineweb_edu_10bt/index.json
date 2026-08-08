@@ -155,9 +155,543 @@
       "tokens": 96566104,
       "utf8_bytes": 389902566,
       "docs": 80384
+    },
+    {
+      "file": "shard_00025.bin",
+      "tokens": 100125555,
+      "utf8_bytes": 404550985,
+      "docs": 84224
+    },
+    {
+      "file": "shard_00026.bin",
+      "tokens": 100118570,
+      "utf8_bytes": 404359695,
+      "docs": 85504
+    },
+    {
+      "file": "shard_00027.bin",
+      "tokens": 100192878,
+      "utf8_bytes": 404248125,
+      "docs": 85760
+    },
+    {
+      "file": "shard_00028.bin",
+      "tokens": 100271090,
+      "utf8_bytes": 405926298,
+      "docs": 86016
+    },
+    {
+      "file": "shard_00029.bin",
+      "tokens": 100156349,
+      "utf8_bytes": 404352648,
+      "docs": 86272
+    },
+    {
+      "file": "shard_00030.bin",
+      "tokens": 100261591,
+      "utf8_bytes": 407022373,
+      "docs": 85760
+    },
+    {
+      "file": "shard_00031.bin",
+      "tokens": 100151665,
+      "utf8_bytes": 405738033,
+      "docs": 86016
+    },
+    {
+      "file": "shard_00032.bin",
+      "tokens": 100107518,
+      "utf8_bytes": 406911951,
+      "docs": 84480
+    },
+    {
+      "file": "shard_00033.bin",
+      "tokens": 100306776,
+      "utf8_bytes": 407073658,
+      "docs": 85248
+    },
+    {
+      "file": "shard_00034.bin",
+      "tokens": 100218094,
+      "utf8_bytes": 407077185,
+      "docs": 86272
+    },
+    {
+      "file": "shard_00035.bin",
+      "tokens": 100002529,
+      "utf8_bytes": 406740709,
+      "docs": 86016
+    },
+    {
+      "file": "shard_00036.bin",
+      "tokens": 100176924,
+      "utf8_bytes": 402344348,
+      "docs": 87040
+    },
+    {
+      "file": "shard_00037.bin",
+      "tokens": 100123128,
+      "utf8_bytes": 402150801,
+      "docs": 88320
+    },
+    {
+      "file": "shard_00038.bin",
+      "tokens": 100259503,
+      "utf8_bytes": 402793436,
+      "docs": 87552
+    },
+    {
+      "file": "shard_00039.bin",
+      "tokens": 100160962,
+      "utf8_bytes": 402342733,
+      "docs": 86016
+    },
+    {
+      "file": "shard_00040.bin",
+      "tokens": 100073125,
+      "utf8_bytes": 401653719,
+      "docs": 86784
+    },
+    {
+      "file": "shard_00041.bin",
+      "tokens": 100094180,
+      "utf8_bytes": 402076621,
+      "docs": 87040
+    },
+    {
+      "file": "shard_00042.bin",
+      "tokens": 100106677,
+      "utf8_bytes": 402735631,
+      "docs": 86528
+    },
+    {
+      "file": "shard_00043.bin",
+      "tokens": 100176626,
+      "utf8_bytes": 402748651,
+      "docs": 87552
+    },
+    {
+      "file": "shard_00044.bin",
+      "tokens": 100084811,
+      "utf8_bytes": 402952100,
+      "docs": 87552
+    },
+    {
+      "file": "shard_00045.bin",
+      "tokens": 100042652,
+      "utf8_bytes": 402249181,
+      "docs": 85248
+    },
+    {
+      "file": "shard_00046.bin",
+      "tokens": 100027971,
+      "utf8_bytes": 401597543,
+      "docs": 84992
+    },
+    {
+      "file": "shard_00047.bin",
+      "tokens": 100247582,
+      "utf8_bytes": 402250521,
+      "docs": 86016
+    },
+    {
+      "file": "shard_00048.bin",
+      "tokens": 100121248,
+      "utf8_bytes": 402690393,
+      "docs": 84736
+    },
+    {
+      "file": "shard_00049.bin",
+      "tokens": 100131961,
+      "utf8_bytes": 402162855,
+      "docs": 85504
+    },
+    {
+      "file": "shard_00050.bin",
+      "tokens": 100204410,
+      "utf8_bytes": 402863209,
+      "docs": 85504
+    },
+    {
+      "file": "shard_00051.bin",
+      "tokens": 100085233,
+      "utf8_bytes": 402348004,
+      "docs": 84736
+    },
+    {
+      "file": "shard_00052.bin",
+      "tokens": 100128120,
+      "utf8_bytes": 402870092,
+      "docs": 86272
+    },
+    {
+      "file": "shard_00053.bin",
+      "tokens": 100020564,
+      "utf8_bytes": 401367802,
+      "docs": 84992
+    },
+    {
+      "file": "shard_00054.bin",
+      "tokens": 100264680,
+      "utf8_bytes": 401904385,
+      "docs": 84736
+    },
+    {
+      "file": "shard_00055.bin",
+      "tokens": 100105728,
+      "utf8_bytes": 401985907,
+      "docs": 83200
+    },
+    {
+      "file": "shard_00056.bin",
+      "tokens": 100091223,
+      "utf8_bytes": 402221728,
+      "docs": 85504
+    },
+    {
+      "file": "shard_00057.bin",
+      "tokens": 100165088,
+      "utf8_bytes": 401717913,
+      "docs": 84992
+    },
+    {
+      "file": "shard_00058.bin",
+      "tokens": 100233945,
+      "utf8_bytes": 401927856,
+      "docs": 84224
+    },
+    {
+      "file": "shard_00059.bin",
+      "tokens": 100027662,
+      "utf8_bytes": 401569807,
+      "docs": 84992
+    },
+    {
+      "file": "shard_00060.bin",
+      "tokens": 100123803,
+      "utf8_bytes": 402918632,
+      "docs": 86016
+    },
+    {
+      "file": "shard_00061.bin",
+      "tokens": 100016657,
+      "utf8_bytes": 402414500,
+      "docs": 84992
+    },
+    {
+      "file": "shard_00062.bin",
+      "tokens": 100227218,
+      "utf8_bytes": 403379143,
+      "docs": 84736
+    },
+    {
+      "file": "shard_00063.bin",
+      "tokens": 100185417,
+      "utf8_bytes": 403503406,
+      "docs": 85504
+    },
+    {
+      "file": "shard_00064.bin",
+      "tokens": 100211125,
+      "utf8_bytes": 403097646,
+      "docs": 86016
+    },
+    {
+      "file": "shard_00065.bin",
+      "tokens": 100158094,
+      "utf8_bytes": 401938420,
+      "docs": 82176
+    },
+    {
+      "file": "shard_00066.bin",
+      "tokens": 100228518,
+      "utf8_bytes": 401527210,
+      "docs": 81920
+    },
+    {
+      "file": "shard_00067.bin",
+      "tokens": 100202576,
+      "utf8_bytes": 402198688,
+      "docs": 83200
+    },
+    {
+      "file": "shard_00068.bin",
+      "tokens": 100327467,
+      "utf8_bytes": 402655605,
+      "docs": 82176
+    },
+    {
+      "file": "shard_00069.bin",
+      "tokens": 100183000,
+      "utf8_bytes": 402941656,
+      "docs": 84992
+    },
+    {
+      "file": "shard_00070.bin",
+      "tokens": 100126695,
+      "utf8_bytes": 402668038,
+      "docs": 84224
+    },
+    {
+      "file": "shard_00071.bin",
+      "tokens": 100126996,
+      "utf8_bytes": 403197711,
+      "docs": 84992
+    },
+    {
+      "file": "shard_00072.bin",
+      "tokens": 100020071,
+      "utf8_bytes": 402287442,
+      "docs": 84736
+    },
+    {
+      "file": "shard_00073.bin",
+      "tokens": 100258007,
+      "utf8_bytes": 402879465,
+      "docs": 85248
+    },
+    {
+      "file": "shard_00074.bin",
+      "tokens": 100292225,
+      "utf8_bytes": 403400169,
+      "docs": 84224
+    },
+    {
+      "file": "shard_00075.bin",
+      "tokens": 100299056,
+      "utf8_bytes": 402784863,
+      "docs": 83712
+    },
+    {
+      "file": "shard_00076.bin",
+      "tokens": 100266609,
+      "utf8_bytes": 402123043,
+      "docs": 82688
+    },
+    {
+      "file": "shard_00077.bin",
+      "tokens": 100151167,
+      "utf8_bytes": 401027604,
+      "docs": 83200
+    },
+    {
+      "file": "shard_00078.bin",
+      "tokens": 100138893,
+      "utf8_bytes": 401336463,
+      "docs": 82432
+    },
+    {
+      "file": "shard_00079.bin",
+      "tokens": 100054186,
+      "utf8_bytes": 402231534,
+      "docs": 81664
+    },
+    {
+      "file": "shard_00080.bin",
+      "tokens": 100172807,
+      "utf8_bytes": 402332744,
+      "docs": 81152
+    },
+    {
+      "file": "shard_00081.bin",
+      "tokens": 100039063,
+      "utf8_bytes": 401579528,
+      "docs": 82176
+    },
+    {
+      "file": "shard_00082.bin",
+      "tokens": 100303219,
+      "utf8_bytes": 403498301,
+      "docs": 83456
+    },
+    {
+      "file": "shard_00083.bin",
+      "tokens": 100032454,
+      "utf8_bytes": 402469227,
+      "docs": 82432
+    },
+    {
+      "file": "shard_00084.bin",
+      "tokens": 100025607,
+      "utf8_bytes": 403048711,
+      "docs": 84736
+    },
+    {
+      "file": "shard_00085.bin",
+      "tokens": 100122700,
+      "utf8_bytes": 402460940,
+      "docs": 83200
+    },
+    {
+      "file": "shard_00086.bin",
+      "tokens": 100077045,
+      "utf8_bytes": 402948173,
+      "docs": 84480
+    },
+    {
+      "file": "shard_00087.bin",
+      "tokens": 100113996,
+      "utf8_bytes": 403244639,
+      "docs": 84736
+    },
+    {
+      "file": "shard_00088.bin",
+      "tokens": 100279881,
+      "utf8_bytes": 403742031,
+      "docs": 85504
+    },
+    {
+      "file": "shard_00089.bin",
+      "tokens": 100204169,
+      "utf8_bytes": 403807927,
+      "docs": 84224
+    },
+    {
+      "file": "shard_00090.bin",
+      "tokens": 100116837,
+      "utf8_bytes": 403926626,
+      "docs": 84992
+    },
+    {
+      "file": "shard_00091.bin",
+      "tokens": 100221167,
+      "utf8_bytes": 404033059,
+      "docs": 85760
+    },
+    {
+      "file": "shard_00092.bin",
+      "tokens": 100071007,
+      "utf8_bytes": 402693782,
+      "docs": 84992
+    },
+    {
+      "file": "shard_00093.bin",
+      "tokens": 100167326,
+      "utf8_bytes": 402689348,
+      "docs": 83968
+    },
+    {
+      "file": "shard_00094.bin",
+      "tokens": 100087301,
+      "utf8_bytes": 403203581,
+      "docs": 85504
+    },
+    {
+      "file": "shard_00095.bin",
+      "tokens": 100166567,
+      "utf8_bytes": 403344720,
+      "docs": 86272
+    },
+    {
+      "file": "shard_00096.bin",
+      "tokens": 100271073,
+      "utf8_bytes": 404611128,
+      "docs": 84992
+    },
+    {
+      "file": "shard_00097.bin",
+      "tokens": 100220170,
+      "utf8_bytes": 404731117,
+      "docs": 84992
+    },
+    {
+      "file": "shard_00098.bin",
+      "tokens": 100154488,
+      "utf8_bytes": 404846890,
+      "docs": 86528
+    },
+    {
+      "file": "shard_00099.bin",
+      "tokens": 100095714,
+      "utf8_bytes": 405156939,
+      "docs": 86272
+    },
+    {
+      "file": "shard_00100.bin",
+      "tokens": 100323884,
+      "utf8_bytes": 405059370,
+      "docs": 85504
+    },
+    {
+      "file": "shard_00101.bin",
+      "tokens": 100018668,
+      "utf8_bytes": 403572208,
+      "docs": 85760
+    },
+    {
+      "file": "shard_00102.bin",
+      "tokens": 100211552,
+      "utf8_bytes": 405196214,
+      "docs": 85504
+    },
+    {
+      "file": "shard_00103.bin",
+      "tokens": 100255296,
+      "utf8_bytes": 404803271,
+      "docs": 85760
+    },
+    {
+      "file": "shard_00104.bin",
+      "tokens": 100186208,
+      "utf8_bytes": 403866481,
+      "docs": 85504
+    },
+    {
+      "file": "shard_00105.bin",
+      "tokens": 100242768,
+      "utf8_bytes": 404171068,
+      "docs": 84992
+    },
+    {
+      "file": "shard_00106.bin",
+      "tokens": 100176150,
+      "utf8_bytes": 404377815,
+      "docs": 84480
+    },
+    {
+      "file": "shard_00107.bin",
+      "tokens": 100065725,
+      "utf8_bytes": 404404291,
+      "docs": 85504
+    },
+    {
+      "file": "shard_00108.bin",
+      "tokens": 100118820,
+      "utf8_bytes": 404522922,
+      "docs": 85760
+    },
+    {
+      "file": "shard_00109.bin",
+      "tokens": 100285570,
+      "utf8_bytes": 405226027,
+      "docs": 84480
+    },
+    {
+      "file": "shard_00110.bin",
+      "tokens": 100041049,
+      "utf8_bytes": 403999197,
+      "docs": 84480
+    },
+    {
+      "file": "shard_00111.bin",
+      "tokens": 100114385,
+      "utf8_bytes": 404062304,
+      "docs": 84480
+    },
+    {
+      "file": "shard_00112.bin",
+      "tokens": 100001884,
+      "utf8_bytes": 404307454,
+      "docs": 85248
+    },
+    {
+      "file": "shard_00113.bin",
+      "tokens": 51509440,
+      "utf8_bytes": 208248951,
+      "docs": 42853
     }
   ],
-  "total_tokens": 2500106180,
+  "total_tokens": 11365264568,
   "val": {
     "val1": {
       "file": "val1.bin",

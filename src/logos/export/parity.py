@@ -107,11 +107,22 @@ def export_parity(
     model_b: nn.Module,
     prompts_tokens: torch.Tensor,
     device: str = "cpu",
-    kl_tol: float = 1e-3,
+    kl_tol: float = 5e-3,
     atol: float = 1e-2,
 ) -> dict:
     """Combined verdict: weights_parity AND kl_div_max <= kl_tol. max-abs
-    logit diff is reported but does not gate (see module docstring)."""
+    logit diff is reported but does not gate (see module docstring).
+
+    kl_tol calibration (measured, L0): fresh shallow models reload at KL
+    1e-6..1e-4; a fully-trained 6-layer ternary model at 320 tokens/param —
+    the sharpest distributions in the grid — reached KL 1.9e-3 with all 56
+    layers' packed codes AND scales bitwise identical, i.e. pure activation-
+    quant amplification of the recomputed-gamma ulp, zero export error. The
+    bound exists as defense-in-depth for cross-implementation parity (e.g.
+    trainer vs bitnet.cpp, where bitwise code comparison needs the other
+    side's unpacker); 5e-3 clears measured amplification with margin while
+    still catching real reconstruction errors, which land orders of
+    magnitude higher."""
     wp = weights_parity(model_a, model_b)
     lp = logit_parity(model_a, model_b, prompts_tokens, device=device, atol=atol)
     return {
