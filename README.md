@@ -68,7 +68,8 @@ research also rations who gets to do research, and memory-optimal training
 is one of the few ways around both.
 
 - 📋 Research plan: [v0.3 — LOGOS-Local](research/logos-research-plan-v0.3-local.md) (active) · [v0.2 — full-scale program](research/logos-research-plan-v0.2.md) (reference design)
-- 🧪 First results: [Research Note 0 — micro-scale replication](docs/research-note-0-micro-p0.md) · [Research Note 1 — the L0 crossover](docs/research-note-1-l0.md) (preliminary)
+- 🧪 Research notes: [0 — micro-scale replication](docs/research-note-0-micro-p0.md) · [1 — the L0 crossover](docs/research-note-1-l0.md) · [2 — L1 protocol freeze](docs/research-note-2-l1-protocol.md) (in progress)
+- 🔍 External review: [kimi3 round 1](docs/kimi3-research-review-round-1.md)
 - 🧰 Methods: [methodology.md](docs/methodology.md)
 - ✅ Verification: [validation panel, round 1 report](docs/validation-panel-round-1.md) — 11 falsifiable probes, 49 sha256-locked kill gates
 

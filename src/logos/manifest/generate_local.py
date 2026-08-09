@@ -121,6 +121,44 @@ def gen_l1() -> list[RunSpec]:
     return runs
 
 
+def gen_l1lrx() -> list[RunSpec]:
+    """LR-grid extension — bracket the optimum before the protocol freezes.
+
+    The {1x, 2x, 4x} probe grid put three of five argmins ON AN EDGE (bf16
+    and 2-bit at the bottom, 4-bit at the top), so those optima are
+    unbracketed and the frozen rule would rest on an assumption. The bf16
+    case is the dangerous one: if full precision really wants < 1x, it has
+    been handicapped in every comparison so far and the ternary advantage
+    is inflated. This extends the grid past every edge and adds seeds to
+    the largest sub-noise difference (4-bit x2 vs x4).
+
+    12 runs, ~23 GPU-h on the 3080 - cheap insurance on a decision that
+    propagates to every remaining run in the program."""
+    runs = []
+    probe = dict(total_tokens=200_000_000)
+    for prec in ALL_PRECISIONS:  # bracket everyone from below
+        runs.append(
+            _spec("6m", prec, 31.1, 0, "3080", "l1lrx", ["lr_probe", "bracket"],
+                  run_id=f"l-lrp-6m-{prec.value}-x0.5", lr_mult_override=0.5, **probe)
+        )
+    for prec in (PBF, P2):  # their argmins sat at the old lower edge
+        runs.append(
+            _spec("6m", prec, 31.1, 0, "3080", "l1lrx", ["lr_probe", "bracket"],
+                  run_id=f"l-lrp-6m-{prec.value}-x0.25", lr_mult_override=0.25, **probe)
+        )
+    runs.append(  # 4-bit's argmin sat at the old upper edge
+        _spec("6m", P4, 31.1, 0, "3080", "l1lrx", ["lr_probe", "bracket"],
+              run_id="l-lrp-6m-4-x8", lr_mult_override=8.0, **probe)
+    )
+    for mult in (2.0, 4.0):  # tie-break the largest sub-noise gap
+        for seed in (1, 2):
+            runs.append(
+                _spec("6m", P4, 31.1, seed, "3080", "l1lrx", ["lr_probe", "tiebreak"],
+                      run_id=f"l-lrp-6m-4-x{mult:g}-s{seed}", lr_mult_override=mult, **probe)
+            )
+    return runs
+
+
 def gen_l1ctl() -> list[RunSpec]:
     """LR-confound control arms (kimi3 review F1): fully cross precision x LR
     at the crossover cells. bf16 at the ternary 2x multiplier ({3m,6m} x
@@ -222,6 +260,15 @@ def main(argv: list[str] | None = None) -> int:
     phases = {
         "l0": (gen_l0(), {"purpose": "replication + noise floor (RQ1)", "gpu": "3080"}),
         "l1": (gen_l1(), {"purpose": "gap dynamics + protocol lock (RQ2)", "gpu": "3080/5090"}),
+        "l1lrx": (
+            gen_l1lrx(),
+            {
+                "purpose": "LR-grid extension: bracket every argmin that sat on a "
+                "grid edge, before the per-precision LR rule freezes",
+                "gpu": "3080",
+                "data_dir": "data/fineweb_edu_10bt",
+            },
+        ),
         "l1ctl": (
             gen_l1ctl(),
             {
