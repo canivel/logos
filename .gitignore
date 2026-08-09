@@ -18,3 +18,6 @@ ops/digests/
 # record, and the blind-extrapolation protocol relies on git timestamps.
 validation/out/
 uv.lock
+
+# the book's figures are generated into docs/book/figures and copied to docs/figures;
+# both are committed so GitHub Pages can serve them

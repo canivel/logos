@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en" data-theme-pref="system">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LOGOS — Memory-optimal scaling laws for natively low-bit language models</title>
+<meta name="description" content="This is a working notebook for a research project in progress. It explains, from the ground up, why the way we shrink language models is running out of road — and what a proper ans">
+<meta property="og:title" content="LOGOS — Memory-optimal scaling laws for natively low-bit language models">
+<meta property="og:description" content="This is a working notebook for a research project in progress. It explains, from the ground up, why the way we shrink language models is running out of road — and what a proper ans">
+<meta property="og:type" content="article">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>▚</text></svg>">
+<link rel="stylesheet" href="assets/book.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="topbar">
+  <a class="brand" href="index.html"><span class="brand-mark">▚</span> LOGOS</a>
+  <div class="topbar-right">
+    <a class="topbar-link" href="https://github.com/canivel/logos">Repository</a>
+    <button class="theme-toggle" type="button" aria-label="Switch colour theme">◐</button>
+    <button class="nav-toggle" type="button" aria-label="Open chapter list">☰</button>
+  </div>
+</header>
+<div class="shell">
+  <nav class="sidebar" aria-label="Chapters">
+    
+      
+      <ul class="nav-list">
+      
+        <li><a href="index.html" class="current" aria-current="page">Start here</a></li>
+      
+      </ul>
+    
+      <div class="nav-part">Part I — Why this exists</div>
+      <ul class="nav-list">
+      
+        <li><a href="01-the-memory-wall.html" >1 · The memory wall</a></li>
+      
+        <li><a href="02-what-a-language-model-is.html" >2 · What a language model is</a></li>
+      
+        <li><a href="03-measuring-quality.html" >3 · Measuring quality</a></li>
+      
+      </ul>
+    
+      <div class="nav-part">Part II — The toolkit</div>
+      <ul class="nav-list">
+      
+        <li><a href="04-scaling-laws.html" >4 · Scaling laws</a></li>
+      
+        <li><a href="05-numbers-in-a-computer.html" >5 · Numbers in a computer</a></li>
+      
+        <li><a href="06-quantization.html" >6 · Quantization</a></li>
+      
+        <li><a href="07-training-in-low-precision.html" >7 · Training in low precision</a></li>
+      
+        <li><a href="08-the-kv-cache.html" >8 · The KV cache</a></li>
+      
+      </ul>
+    
+      <div class="nav-part">Part III — The research</div>
+      <ul class="nav-list">
+      
+        <li><a href="09-the-question.html" >9 · The question</a></li>
+      
+        <li><a href="10-designing-a-clean-experiment.html" >10 · Designing a clean experiment</a></li>
+      
+        <li><a href="11-building-the-machine.html" >11 · Building the machine</a></li>
+      
+        <li><a href="12-trusting-the-numbers.html" >12 · Trusting the numbers</a></li>
+      
+      </ul>
+    
+      <div class="nav-part">Part IV — Results & what's next</div>
+      <ul class="nav-list">
+      
+        <li><a href="13-what-we-found.html" >13 · What we found so far</a></li>
+      
+        <li><a href="14-fitting-the-law.html" >14 · Fitting the law</a></li>
+      
+        <li><a href="15-the-road-ahead.html" >15 · The road ahead</a></li>
+      
+      </ul>
+    
+      <div class="nav-part">Reference</div>
+      <ul class="nav-list">
+      
+        <li><a href="glossary.html" >Glossary</a></li>
+      
+      </ul>
+    
+  </nav>
+  <main id="main">
+    
+    <article class="prose">
+      <h1 id="a-memory-budget-and-the-model-that-fits-it">A memory budget, and the model that fits it<a class="anchor" href="#a-memory-budget-and-the-model-that-fits-it" aria-label="Link to this section">#</a></h1>
+<p><em>This is a working notebook for a research project in progress. It explains, from the ground up, why the way we shrink language models is running out of road — and what a proper answer would look like. If you know roughly what a neural network is, you can read the whole thing.</em></p>
+<p>Every language model you can actually run is a compromise between two numbers: how good it is, and how many bytes it occupies. That second number decides whether a model runs on your phone, on your laptop, in a datacenter, or nowhere you can reach. And in 2026, bytes have become the expensive part.</p>
+<p>The standard way the field handles this is to train a model at full precision and then squeeze it afterwards — <strong>quantization</strong>, applied as a finishing step. It works well enough down to about four bits per weight and then falls apart, which is unfortunate, because four bits is roughly where the savings stop being interesting.</p>
+<p>This project takes the other road: train the model in low precision <strong>from the beginning</strong>, so it can adapt to the constraint while it learns. That raises a question nobody has answered, and it is the question this whole project exists to answer:</p>
+<blockquote>
+<p><strong>Given a fixed number of bytes at inference time, how should you spend them?</strong> More parameters at fewer bits each, or fewer parameters at higher precision? How long should you train? How much of the budget should the attention cache take?</p>
+</blockquote>
+<div class="statrow">
+<div class="stat"><b>68</b><span>training runs completed so far</span></div>
+<div class="stat"><b>1</b><span>consumer GPU doing the work</span></div>
+<div class="stat"><b>≤$100</b><span>total cloud budget</span></div>
+<div class="stat"><b>49</b><span>pre-registered verification gates</span></div>
+</div>
+
+<h2 id="the-first-real-finding">The first real finding<a class="anchor" href="#the-first-real-finding" aria-label="Link to this section">#</a></h2>
+<p>There is already an answer to part of the question, and it is not a constant. Whether low precision wins depends on <strong>how long you train</strong>.</p>
+<figure class="fig"><picture><source srcset="figures/l0-crossover-dark.png" media="(prefers-color-scheme: dark)" class="dark-src"><img src="figures/l0-crossover.png" alt="The gap between a ternary model and a full-precision one, as a function of how many tokens each parameter is trained on. Below zero means ternary is better. The bars are two standard deviations of measured run-to-run noise, so a point whose bar crosses zero is not a claim." loading="lazy" data-light="figures/l0-crossover.png" data-dark="figures/l0-crossover-dark.png"></picture><figcaption>The gap between a ternary model and a full-precision one, as a function of how many tokens each parameter is trained on. Below zero means ternary is better. The bars are two standard deviations of measured run-to-run noise, so a point whose bar crosses zero is not a claim.</figcaption></figure>
+<p>Train a small model for about 20 tokens per parameter — roughly the compute-optimal point — and the <strong>ternary</strong> model, storing each weight as just −1, 0, or +1, is measurably <em>better</em> than the full-precision one at eight times fewer bytes. Keep training the same models to 320 tokens per parameter and the ordering flips decisively.</p>
+<p>That matters because every model anyone actually deploys lives far out on the right of that chart. It also means the question &quot;which precision should I use?&quot; has no fixed answer — it has a <em>crossover</em>, and locating that crossover precisely, across model sizes and byte budgets, is what the rest of this project does.</p>
+<h2 id="how-to-read-this-book">How to read this book<a class="anchor" href="#how-to-read-this-book" aria-label="Link to this section">#</a></h2>
+<p>The book is built so you can start anywhere, but it is written to be read in order. Part I explains why the problem exists and gives you the vocabulary. Part II is the toolkit — scaling laws, how numbers are stored, what quantization actually does to a weight. Part III is the research itself: the question, the experimental design, the machinery, and how the numbers are kept honest. Part IV is what has been measured so far and what comes next.</p>
+<div class="cardgrid">
+<div class="card"><h4><a href="01-the-memory-wall.html">Part I — Why this exists</a></h4><p>The memory crunch, what a language model is, and how we decide one model is better than another.</p></div>
+<div class="card"><h4><a href="04-scaling-laws.html">Part II — The toolkit</a></h4><p>Scaling laws, bits and bytes, quantization, training in low precision, and the attention cache.</p></div>
+<div class="card"><h4><a href="09-the-question.html">Part III — The research</a></h4><p>The unanswered question, how to design an experiment that can answer it, and how to trust the result.</p></div>
+<div class="card"><h4><a href="13-what-we-found.html">Part IV — Results</a></h4><p>What the runs have shown so far, how the law gets fitted, and what remains.</p></div>
+</div>
+
+<p>Every number in this book comes from a run recorded in the project's <a href="https://github.com/canivel/logos/blob/main/results/results.jsonl">results file</a>, and every figure regenerates from that file. Anything drawn to explain an idea rather than report a measurement is labelled <em>schematic</em> inside the figure itself. Where a result is still inside the noise, the book says so and makes no claim — that discipline is explained in <a href="03-measuring-quality.html">Chapter 3</a> and is the reason to trust the rest.</p>
+<aside class="callout callout-aside"><span class="callout-label">Worth knowing</span><div class="callout-body"><p>This is a solo, self-funded project. The entire experimental grid runs on one desktop graphics card, with a hundred dollars of cloud compute reserved for a single validation step. That constraint is not an apology — it is part of the argument, and <a href="15-the-road-ahead.html">Chapter 15</a> explains why.</p></div></aside>
+
+    </article>
+    <nav class="pager">
+      <span></span>
+      <a class="pager-next" href="01-the-memory-wall.html"><span>Next</span>1 · The memory wall</a>
+    </nav>
+    <footer class="foot">
+      <p>Memory-optimal scaling laws for natively low-bit language models · <a href="https://github.com/canivel/logos">source and data on GitHub</a> · Apache-2.0</p>
+    </footer>
+  </main>
+</div>
+<script>
+(function () {
+  var root = document.documentElement;
+  var saved = localStorage.getItem('logos-theme');
+  if (saved) root.setAttribute('data-theme', saved);
+  function currentIsDark() {
+    var attr = root.getAttribute('data-theme');
+    if (attr) return attr === 'dark';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+  function syncFigures() {
+    var explicit = root.getAttribute('data-theme');
+    var dark = currentIsDark();
+    // A <source media="(prefers-color-scheme: dark)"> outranks the <img src>,
+    // so an explicit choice has to retarget the source too, not just the img.
+    document.querySelectorAll('figure.fig source.dark-src').forEach(function (s) {
+      s.media = explicit ? (dark ? 'all' : 'not all') : '(prefers-color-scheme: dark)';
+    });
+    document.querySelectorAll('figure.fig img').forEach(function (img) {
+      var want = dark ? img.dataset.dark : img.dataset.light;
+      if (want && img.getAttribute('src') !== want) img.setAttribute('src', want);
+    });
+  }
+  var btn = document.querySelector('.theme-toggle');
+  if (btn) btn.addEventListener('click', function () {
+    var next = currentIsDark() ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    localStorage.setItem('logos-theme', next);
+    syncFigures();
+  });
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', syncFigures);
+  syncFigures();
+  var navBtn = document.querySelector('.nav-toggle');
+  if (navBtn) navBtn.addEventListener('click', function () {
+    document.querySelector('.sidebar').classList.toggle('open');
+  });
+})();
+</script>
+</body>
+</html>

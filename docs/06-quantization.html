@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en" data-theme-pref="system">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chapter 6 — Quantization (the standard fix, and where it breaks) — LOGOS</title>
+<meta name="description" content="This chapter explains what quantization is, how the industry's dominant approach — quantizing after training is over — actually works, and why it is so popular. Then it takes the f">
+<meta property="og:title" content="Chapter 6 — Quantization (the standard fix, and where it breaks) — LOGOS">
+<meta property="og:description" content="This chapter explains what quantization is, how the industry's dominant approach — quantizing after training is over — actually works, and why it is so popular. Then it takes the f">
+<meta property="og:type" content="article">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>▚</text></svg>">
+<link rel="stylesheet" href="assets/book.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="topbar">
+  <a class="brand" href="index.html"><span class="brand-mark">▚</span> LOGOS</a>
+  <div class="topbar-right">
+    <a class="topbar-link" href="https://github.com/canivel/logos">Repository</a>
+    <button class="theme-toggle" type="button" aria-label="Switch colour theme">◐</button>
+    <button class="nav-toggle" type="button" aria-label="Open chapter list">☰</button>
+  </div>
+</header>
+<div class="shell">
+  <nav class="sidebar" aria-label="Chapters">
+    
+      
+      <ul class="nav-list">
+      
+        <li><a href="index.html" >Start here</a></li>
+      
+      </ul>
+    
+      <div class="nav-part">Part I — Why this exists</div>
+      <ul class="nav-list">
+      
+        <li><a href="01-the-memory-wall.html" >1 · The memory wall</a></li>
+      
+        <li><a href="02-what-a-language-model-is.html" >2 · What a language model is</a></li>
+      
+        <li><a href="03-measuring-quality.html" >3 · Measuring quality</a></li>
+      
+      </ul>
+    
+      <div class="nav-part">Part II — The toolkit</div>
+      <ul class="nav-list">
+      
+        <li><a href="04-scaling-laws.html" >4 · Scaling laws</a></li>
+      
+        <li><a href="05-numbers-in-a-computer.html" >5 · Numbers in a computer</a></li>
+      
+        <li><a href="06-quantization.html" class="current" aria-current="page">6 · Quantization</a></li>
+      
+        <li><a href="07-training-in-low-precision.html" >7 · Training in low precision</a></li>
+      
+        <li><a href="08-the-kv-cache.html" >8 · The KV cache</a></li>
+      
+      </ul>
+    
+      <div class="nav-part">Part III — The research</div>
+      <ul class="nav-list">
+      
+        <li><a href="09-the-question.html" >9 · The question</a></li>
+      
+        <li><a href="10-designing-a-clean-experiment.html" >10 · Designing a clean experiment</a></li>
+      
+        <li><a href="11-building-the-machine.html" >11 · Building the machine</a></li>
+      
+        <li><a href="12-trusting-the-numbers.html" >12 · Trusting the numbers</a></li>
+      
+      </ul>
+    
+      <div class="nav-part">Part IV — Results & what's next</div>
+      <ul class="nav-list">
+      
+        <li><a href="13-what-we-found.html" >13 · What we found so far</a></li>
+      
+        <li><a href="14-fitting-the-law.html" >14 · Fitting the law</a></li>
+      
+        <li><a href="15-the-road-ahead.html" >15 · The road ahead</a></li>
+      
+      </ul>
+    
+      <div class="nav-part">Reference</div>
+      <ul class="nav-list">
+      
+        <li><a href="glossary.html" >Glossary</a></li>
+      
+      </ul>
+    
+  </nav>
+  <main id="main">
+    
+    <details class="toc">
+      <summary>On this page</summary>
+      <ul><li class="toc-l2"><a href="#what-quantization-is">What quantization is</a></li><li class="toc-l2"><a href="#post-training-quantization-the-standard-answer">Post-training quantization: the standard answer</a></li><li class="toc-l2"><a href="#where-it-breaks">Where it breaks</a></li><li class="toc-l2"><a href="#outliers-the-specific-villain">Outliers: the specific villain</a></li><li class="toc-l2"><a href="#activations-are-harder-than-weights">Activations are harder than weights</a></li><li class="toc-l2"><a href="#the-three-part-argument">The three-part argument</a></li><li class="toc-l2"><a href="#in-fairness-to-ptq">In fairness to PTQ</a></li><li class="toc-l2"><a href="#what-comes-next">What comes next</a></li><li class="toc-l2"><a href="#what-to-remember">What to remember</a></li></ul>
+    </details>
+    
+    <article class="prose">
+      <h1 id="chapter-6-quantization-the-standard-fix-and-where-it-breaks">Chapter 6 — Quantization (the standard fix, and where it breaks)<a class="anchor" href="#chapter-6-quantization-the-standard-fix-and-where-it-breaks" aria-label="Link to this section">#</a></h1>
+<p><em>This chapter explains what quantization is, how the industry's dominant approach — quantizing after training is over — actually works, and why it is so popular. Then it takes the failure mode apart carefully: why quality falls off a cliff below about 4 bits, why a handful of outlier values are the specific culprit, and what per-group scaling and activation quantization do about it. It closes with the three-part argument at the center of LOGOS, stated fairly enough that a defender of the standard approach would recognize their own position in it.</em></p>
+<h2 id="what-quantization-is">What quantization is<a class="anchor" href="#what-quantization-is" aria-label="Link to this section">#</a></h2>
+<p><strong>Quantization</strong> means representing a model's numbers with fewer bits than they were computed in — usually the weights, often also the <strong>activations</strong>, the intermediate values that flow through the network as it processes an input.</p>
+<p><a href="05-numbers-in-a-computer.html">Chapter 5</a> supplied the motivation in one line. A billion-parameter model is 2 GB at bf16, 500 MB at 4 bits, and about 200 MB at ternary. Nothing about the model's <em>design</em> changes across those numbers — same architecture, same parameter count, same trained values give or take rounding. Only the description length changes. When memory is the binding constraint, a 4× or 10× reduction costing a few percent of quality is not a marginal optimization; it decides whether the model runs on the hardware you have.</p>
+<p>The mechanism is the one from <a href="05-numbers-in-a-computer.html">Chapter 5</a>: replace each real-valued weight with a small integer code plus a shared scale factor, and reconstruct an approximation when you need it. The interesting question is not <em>whether</em> to do this. It is <strong>when</strong> — after training, or during it.</p>
+<h2 id="post-training-quantization-the-standard-answer">Post-training quantization: the standard answer<a class="anchor" href="#post-training-quantization-the-standard-answer" aria-label="Link to this section">#</a></h2>
+<p><strong>Post-training quantization (PTQ)</strong> dominates practice. You train the model normally, in 16-bit, exactly as you always would; then, once training is finished, you convert the weights to a lower precision and ship that.</p>
+<p>The conversion is mechanically simple. For each weight tensor — or, more commonly, each small group of weights within a tensor — you look at the values, pick a scale factor so the integer grid spans their range, and round every weight to the nearest grid point. Fancier variants exist: some use a small <strong>calibration set</strong>, a few hundred sample inputs run through the model, to choose scales that minimize error in the layer's <em>outputs</em> rather than its weights; some nudge weights to compensate for rounding. The essential character is unchanged. Training produced a set of numbers; PTQ finds the best low-bit approximation to them.</p>
+<p>Its popularity is entirely earned:</p>
+<ul>
+<li><strong>It is nearly free.</strong> No retraining, no gradients, no GPU-weeks. Converting a large model takes minutes to hours on one machine.</li>
+<li><strong>It needs nothing from the model's author.</strong> You can quantize any released checkpoint without access to its training data or recipe.</li>
+<li><strong>The tooling is everywhere and it is good.</strong> GGUF and llama.cpp for local inference, bitsandbytes for PyTorch, and a dozen library quantizers besides — already written, already tested on hundreds of models.</li>
+</ul>
+<p>If you have ever run a large language model on your own laptop, you ran a post-training-quantized model, and it very likely worked well. That experience is real evidence and should not be argued away.</p>
+<aside class="callout callout-plain"><span class="callout-label">In plain terms</span><div class="callout-body"><p>PTQ is compressing a finished model, the way you would compress a finished photograph. It cannot change what was photographed — only how economically it is described.</p></div></aside>
+<h2 id="where-it-breaks">Where it breaks<a class="anchor" href="#where-it-breaks" aria-label="Link to this section">#</a></h2>
+<p>PTQ's quality holds up in a pattern that is consistent enough to state as a rule of thumb: <strong>essentially lossless at 8 bits, usually fine at 4 bits, and degrading sharply below 4.</strong></p>
+<p>That sharpness is the problem, because it lands exactly where the savings live. Sixteen bits to 8 halves the footprint; 8 to 4 halves it again. Everything past that — 3 bits, 2 bits, ternary — is where the remaining factor of two-and-a-half hides, and it is precisely the region PTQ cannot enter without losing a great deal.</p>
+<figure class="fig"><picture><source srcset="figures/ptq-cliff-dark.png" media="(prefers-color-scheme: dark)" class="dark-src"><img src="figures/ptq-cliff.png" alt="Illustrative: model quality against bits per weight, comparing post-training quantization with training-aware low-bit training. PTQ tracks the full-precision baseline down to about 4 bits and then falls away steeply, while the training-aware curve degrades gradually across the same range. Shapes are schematic and label the qualitative claim, not measured values." loading="lazy" data-light="figures/ptq-cliff.png" data-dark="figures/ptq-cliff-dark.png"></picture><figcaption>Illustrative: model quality against bits per weight, comparing post-training quantization with training-aware low-bit training. PTQ tracks the full-precision baseline down to about 4 bits and then falls away steeply, while the training-aware curve degrades gradually across the same range. Shapes are schematic and label the qualitative claim, not measured values.</figcaption></figure>
+<p>Why the cliff? The intuition is worth getting right, because everything else in this book follows from it.</p>
+<p>Training does not produce arbitrary numbers. It produces weights whose <em>precise</em> values encode what the model learned — the relative sizes of nearby weights, the small differences that make one feature fire and another stay quiet. That information lives at a resolution the coarse grid cannot express: at 4 bits you have 16 tick marks for a distribution training laid out across thousands of meaningfully distinct levels, and at 2 bits you have four.</p>
+<p>And here is the decisive part: <strong>nothing gets a chance to compensate.</strong> Training is over. Every weight is rounded independently, errors accumulate through the layers, and no remaining process can notice the damage and adjust the other weights to offset it. The model was optimized on the assumption that its weights were what they were; you then changed them, and told nobody.</p>
+<p>The figure below shows this concretely: a real weight distribution overlaid with the discrete values each format can store.</p>
+<figure class="fig"><picture><source srcset="figures/quant-levels-dark.png" media="(prefers-color-scheme: dark)" class="dark-src"><img src="figures/quant-levels.png" alt="A real trained weight distribution, with the discrete reconstruction levels available to bf16, 4-bit, 2-bit, and ternary formats overlaid. The bf16 grid is dense enough to look continuous against the distribution; the low-bit grids show how few distinct values the entire distribution must collapse onto." loading="lazy" data-light="figures/quant-levels.png" data-dark="figures/quant-levels-dark.png"></picture><figcaption>A real trained weight distribution, with the discrete reconstruction levels available to bf16, 4-bit, 2-bit, and ternary formats overlaid. The bf16 grid is dense enough to look continuous against the distribution; the low-bit grids show how few distinct values the entire distribution must collapse onto.</figcaption></figure>
+<p>Notice how tightly the mass clusters near zero, with thin tails running out to much larger magnitudes. That shape creates the next problem.</p>
+<h2 id="outliers-the-specific-villain">Outliers: the specific villain<a class="anchor" href="#outliers-the-specific-villain" aria-label="Link to this section">#</a></h2>
+<p>If weights were spread evenly across their range, a coarse grid would hurt much less — the tick marks would land where the weights are. They are not spread evenly. A trained distribution is sharply peaked around zero with long tails, and a small number of values sit <em>far</em> out in those tails. These are the <strong>outliers</strong>.</p>
+<p>Outliers wreck a single shared scale. The scale must be large enough to represent the biggest value in the block, since anything larger gets clipped to the maximum code and loses its magnitude entirely. But if the biggest value is twenty times the typical one, setting the scale by that outlier makes every tick mark twenty times coarser than the bulk of the distribution needs. Nearly all the weights end up crammed onto the two or three ticks nearest zero, while most of the grid sits empty, reserved for extremes that occur a handful of times.</p>
+<p>You have spent your bits on rare events and starved the common case.</p>
+<p>It is worse for activations, and worse still because in transformers the outliers are not random: certain <strong>channels</strong> — specific coordinates of the hidden vector, the same ones for every input — carry systematically huge magnitudes, and a single tensor-wide scale is hostage to them.</p>
+<p>The standard mitigation is <strong>per-group scaling</strong>: one scale for each small contiguous group of weights instead of one for the whole tensor. LOGOS uses <strong>groups of 128</strong>, so an outlier distorts the grid only for the 127 weights sharing its group, not for millions elsewhere. The cost is the storage from <a href="05-numbers-in-a-computer.html">Chapter 5</a> — one fp32 scale per group, 4.25 effective bits per weight instead of 4.00. Everyone makes that trade. LOGOS handles ternary differently, following BitNet b1.58: a single per-tensor scale, the mean absolute value of the weights, with each weight rounded to −1, 0, or +1 against it.</p>
+<aside class="callout callout-aside"><span class="callout-label">Worth knowing</span><div class="callout-body"><p>per-group scaling <em>reduces</em> the outlier problem; it does not remove it. Within any group of 128, one large value still coarsens the grid for the other 127. It buys room, and far enough down the bit ladder you run out of room again.</p></div></aside>
+<h2 id="activations-are-harder-than-weights">Activations are harder than weights<a class="anchor" href="#activations-are-harder-than-weights" aria-label="Link to this section">#</a></h2>
+<p>Weight quantization and <strong>activation quantization</strong> sound symmetric. They are not.</p>
+<p>Weights are fixed. Once training ends every weight has a known value; you can inspect the whole distribution at leisure, choose scales offline, and pay that cost once. Activations are computed fresh for every input, and their range depends on what the model is currently reading — so you either guess the range in advance from calibration data, and are wrong whenever an input is unusual, or compute the scale on the fly, which costs time in the hot path of inference.</p>
+<p>The notation for describing a scheme is <strong>W×A8</strong>: k-bit weights with 8-bit activations. A &quot;W4A8&quot; model stores weights at 4 bits and computes with 8-bit activations. LOGOS uses <strong>W×A8 on every low-bit arm</strong> — ternary, 2-bit, 3-bit and 4-bit all run 8-bit activations, computed as a per-token absolute-maximum scale, meaning the scale is derived from each token's own activation vector as it arrives rather than fixed ahead of time. The bf16 control arm has no quantization anywhere.</p>
+<p>Eight bits for activations is a deliberate, common choice: enough that activation quantization is not the dominant error source, which keeps the experiment clean. When the ternary arm and the 4-bit arm differ, the difference is about <em>weights</em>, because the activation treatment is identical across them.</p>
+<h2 id="the-three-part-argument">The three-part argument<a class="anchor" href="#the-three-part-argument" aria-label="Link to this section">#</a></h2>
+<p>Here is the case at the center of this project, stated as precisely as it can be.</p>
+<p><strong>One: PTQ cliffs below 4 bits, exactly where the savings live.</strong> The regime that delivers a 4× to 10× footprint reduction — 3 bits, 2 bits, ternary — is the one it cannot reach without unacceptable degradation. It works well right up to the point where you actually need it.</p>
+<p><strong>Two: it leaves the training economics untouched.</strong> PTQ compresses an artifact. The full-precision model was still trained at full-precision cost, on full-precision memory, before any compression happened. If memory is the scarce resource, PTQ conserves none of it during the phase that consumes the most. A patch applied after training cannot change the economics of training.</p>
+<p><strong>Three: it answers the wrong question.</strong> PTQ asks <em>how little damage can we do to this 16-bit model while squeezing it into 4 bits?</em> That is damage minimization, and it takes the 16-bit model's design — parameter count, width, depth — as fixed. The question a byte budget actually poses is different: <em>what is the best model that fits in this many bytes in the first place?</em> The answers differ, because the second lets you spend the budget on, for instance, a substantially larger model at fewer bits per weight. PTQ cannot even represent that option: by the time it runs, N was decided long ago.</p>
+<h2 id="in-fairness-to-ptq">In fairness to PTQ<a class="anchor" href="#in-fairness-to-ptq" aria-label="Link to this section">#</a></h2>
+<p>Two things must be said clearly, or the argument above becomes a straw man.</p>
+<p><strong>A 4-bit PTQ model is genuinely strong.</strong> It gives you most of a full-precision model's quality at a quarter of its weight bytes, for a few minutes of conversion, with mature tooling, on any checkpoint you can download. No rhetorical move makes that unimpressive. It is a very good deal, and it is why the technique won.</p>
+<p><strong>LOGOS treats it as the competitor to beat, not as a foil.</strong> The project's capstone phase trains the model its fitted law prescribes at a fixed body-byte budget and puts it against baselines at <em>equal bytes</em> — including a 4-bit post-training quantization of a larger bf16 model, alongside the best bf16 configuration that fits and a from-scratch 4-bit trained arm. If native low-bit training does not beat those at the same footprint, the thesis is wrong, and the experiment is arranged so that outcome is visible rather than avoidable.</p>
+<p>There is also a case for PTQ this project does not dispute: when you already have a trained 16-bit model and need it smaller today, PTQ is the right tool, and nothing in native low-bit training helps you compress someone else's checkpoint. The argument here is about which question the <em>field</em> should organize around when bytes are the binding constraint.</p>
+<h2 id="what-comes-next">What comes next<a class="anchor" href="#what-comes-next" aria-label="Link to this section">#</a></h2>
+<p>If quantizing after training runs into a wall below 4 bits because nothing can compensate for the rounding, the obvious response is to move the rounding <em>inside</em> training — to make the model aware, from step one, that its weights will be ternary or 2-bit, so that the remaining weights can adapt around every rounding decision as they are made.</p>
+<p>That is the right idea, and it has one immediate obstacle. Training works by gradient descent, which requires every operation in the network to be <strong>differentiable</strong> — to have a well-defined slope you can propagate error through. Rounding is not. It is a staircase: flat almost everywhere with a slope of zero, punctuated by jumps where the slope is undefined. Run gradients backward through it as written and every one becomes zero. Nothing learns.</p>
+<p><a href="07-training-in-low-precision.html">Chapter 7</a> shows the trick that gets around this, and what it costs.</p>
+<h2 id="what-to-remember">What to remember<a class="anchor" href="#what-to-remember" aria-label="Link to this section">#</a></h2>
+<p>Quantization means describing a model's numbers with fewer bits, and post-training quantization does it the cheapest possible way — train in 16-bit, then round the finished weights onto a coarse integer grid read against a shared scale. It works well down to about 4 bits, and the tooling around it is mature enough that most people running models locally are already relying on it. Below 4 bits it degrades sharply, because trained weights encode information at a resolution the grid cannot express and, with training over, nothing remains to compensate for the error; outlier values make this worse by forcing the scale wide enough to cover rare extremes, which per-group scaling at 128 weights per group mitigates but does not solve. Activations are harder than weights because their range changes with every input, which is why LOGOS holds them at 8 bits — the W×A8 scheme — on every low-bit arm, keeping weight precision the only thing that varies. The argument against PTQ as a <em>strategy</em> is that it cliffs where the savings are, spends the full training bill anyway, and optimizes damage to a 16-bit design rather than searching for the best model that fits the budget — but a 4-bit PTQ model remains a strong, honest baseline, and this project treats it as the thing to beat.</p>
+
+    </article>
+    <nav class="pager">
+      <a class="pager-prev" href="05-numbers-in-a-computer.html"><span>Previous</span>5 · Numbers in a computer</a>
+      <a class="pager-next" href="07-training-in-low-precision.html"><span>Next</span>7 · Training in low precision</a>
+    </nav>
+    <footer class="foot">
+      <p>Memory-optimal scaling laws for natively low-bit language models · <a href="https://github.com/canivel/logos">source and data on GitHub</a> · Apache-2.0</p>
+    </footer>
+  </main>
+</div>
+<script>
+(function () {
+  var root = document.documentElement;
+  var saved = localStorage.getItem('logos-theme');
+  if (saved) root.setAttribute('data-theme', saved);
+  function currentIsDark() {
+    var attr = root.getAttribute('data-theme');
+    if (attr) return attr === 'dark';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+  function syncFigures() {
+    var explicit = root.getAttribute('data-theme');
+    var dark = currentIsDark();
+    // A <source media="(prefers-color-scheme: dark)"> outranks the <img src>,
+    // so an explicit choice has to retarget the source too, not just the img.
+    document.querySelectorAll('figure.fig source.dark-src').forEach(function (s) {
+      s.media = explicit ? (dark ? 'all' : 'not all') : '(prefers-color-scheme: dark)';
+    });
+    document.querySelectorAll('figure.fig img').forEach(function (img) {
+      var want = dark ? img.dataset.dark : img.dataset.light;
+      if (want && img.getAttribute('src') !== want) img.setAttribute('src', want);
+    });
+  }
+  var btn = document.querySelector('.theme-toggle');
+  if (btn) btn.addEventListener('click', function () {
+    var next = currentIsDark() ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    localStorage.setItem('logos-theme', next);
+    syncFigures();
+  });
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', syncFigures);
+  syncFigures();
+  var navBtn = document.querySelector('.nav-toggle');
+  if (navBtn) navBtn.addEventListener('click', function () {
+    document.querySelector('.sidebar').classList.toggle('open');
+  });
+})();
+</script>
+</body>
+</html>

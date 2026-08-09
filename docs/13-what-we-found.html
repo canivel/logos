@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="en" data-theme-pref="system">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chapter 13 — What we found so far — LOGOS</title>
+<meta name="description" content="This chapter reports every result the project has produced to date, with its uncertainty attached. You will see where low precision wins, where it loses, where the answer is still ">
+<meta property="og:title" content="Chapter 13 — What we found so far — LOGOS">
+<meta property="og:description" content="This chapter reports every result the project has produced to date, with its uncertainty attached. You will see where low precision wins, where it loses, where the answer is still ">
+<meta property="og:type" content="article">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>▚</text></svg>">
+<link rel="stylesheet" href="assets/book.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="topbar">
+  <a class="brand" href="index.html"><span class="brand-mark">▚</span> LOGOS</a>
+  <div class="topbar-right">
+    <a class="topbar-link" href="https://github.com/canivel/logos">Repository</a>
+    <button class="theme-toggle" type="button" aria-label="Switch colour theme">◐</button>
+    <button class="nav-toggle" type="button" aria-label="Open chapter list">☰</button>
+  </div>
+</header>
+<div class="shell">
+  <nav class="sidebar" aria-label="Chapters">
+    
+      
+      <ul class="nav-list">
+      
+        <li><a href="index.html" >Start here</a></li>
+      
+      </ul>
+    
+      <div class="nav-part">Part I — Why this exists</div>
+      <ul class="nav-list">
+      
+        <li><a href="01-the-memory-wall.html" >1 · The memory wall</a></li>
+      
+        <li><a href="02-what-a-language-model-is.html" >2 · What a language model is</a></li>
+      
+        <li><a href="03-measuring-quality.html" >3 · Measuring quality</a></li>
+      
+      </ul>
+    
+      <div class="nav-part">Part II — The toolkit</div>
+      <ul class="nav-list">
+      
+        <li><a href="04-scaling-laws.html" >4 · Scaling laws</a></li>
+      
+        <li><a href="05-numbers-in-a-computer.html" >5 · Numbers in a computer</a></li>
+      
+        <li><a href="06-quantization.html" >6 · Quantization</a></li>
+      
+        <li><a href="07-training-in-low-precision.html" >7 · Training in low precision</a></li>
+      
+        <li><a href="08-the-kv-cache.html" >8 · The KV cache</a></li>
+      
+      </ul>
+    
+      <div class="nav-part">Part III — The research</div>
+      <ul class="nav-list">
+      
+        <li><a href="09-the-question.html" >9 · The question</a></li>
+      
+        <li><a href="10-designing-a-clean-experiment.html" >10 · Designing a clean experiment</a></li>
+      
+        <li><a href="11-building-the-machine.html" >11 · Building the machine</a></li>
+      
+        <li><a href="12-trusting-the-numbers.html" >12 · Trusting the numbers</a></li>
+      
+      </ul>
+    
+      <div class="nav-part">Part IV — Results & what's next</div>
+      <ul class="nav-list">
+      
+        <li><a href="13-what-we-found.html" class="current" aria-current="page">13 · What we found so far</a></li>
+      
+        <li><a href="14-fitting-the-law.html" >14 · Fitting the law</a></li>
+      
+        <li><a href="15-the-road-ahead.html" >15 · The road ahead</a></li>
+      
+      </ul>
+    
+      <div class="nav-part">Reference</div>
+      <ul class="nav-list">
+      
+        <li><a href="glossary.html" >Glossary</a></li>
+      
+      </ul>
+    
+  </nav>
+  <main id="main">
+    
+    <details class="toc">
+      <summary>On this page</summary>
+      <ul><li class="toc-l2"><a href="#the-stack-works-end-to-end">The stack works end to end</a></li><li class="toc-l2"><a href="#the-crossover-with-its-noise-floor-measured">The crossover, with its noise floor measured</a></li><li class="toc-l2"><a href="#it-is-a-precision-effect-not-a-learning-rate-artifact">It is a precision effect, not a learning-rate artifact</a></li><li class="toc-l2"><a href="#low-bit-training-barely-notices-a-mistuned-learning-rate">Low-bit training barely notices a mistuned learning rate</a></li><li class="toc-l2"><a href="#at-12m-parameters-every-low-bit-arm-beats-full-precision">At 12M parameters, every low-bit arm beats full precision</a></li><li class="toc-l2"><a href="#what-the-data-cannot-yet-say">What the data cannot yet say</a></li><li class="toc-l2"><a href="#what-to-remember">What to remember</a></li></ul>
+    </details>
+    
+    <article class="prose">
+      <h1 id="chapter-13-what-we-found-so-far">Chapter 13 — What we found so far<a class="anchor" href="#chapter-13-what-we-found-so-far" aria-label="Link to this section">#</a></h1>
+<p><em>This chapter reports every result the project has produced to date, with its uncertainty attached. You will see where low precision wins, where it loses, where the answer is still inside the noise, and — just as important — which questions the data cannot yet touch.</em></p>
+<p>Everything here comes from runs recorded in the project's results file. Each row carries the hash of the configuration that produced it, so any number below can be traced back to the exact manifest entry, and the figures regenerate from that file by script. Where a difference does not clear the noise bar described in <a href="03-measuring-quality.html">Chapter 3</a>, this chapter says so and makes no claim.</p>
+<h2 id="the-stack-works-end-to-end">The stack works end to end<a class="anchor" href="#the-stack-works-end-to-end" aria-label="Link to this section">#</a></h2>
+<p>The first thing to establish was not a research result at all. It was whether the machinery — quantizers, trainer, evaluator, exporter — could run a full precision ladder from raw text to a packed artifact without silently corrupting something along the way.</p>
+<figure class="fig"><picture><source srcset="figures/microp0-curves-dark.png" media="(prefers-color-scheme: dark)" class="dark-src"><img src="figures/microp0-curves.png" alt="The full precision ladder training on real text at 4.8M parameters. Every arm learns; the arms are indistinguishable at this scale and this amount of training." loading="lazy" data-light="figures/microp0-curves.png" data-dark="figures/microp0-curves-dark.png"></picture><figcaption>The full precision ladder training on real text at 4.8M parameters. Every arm learns; the arms are indistinguishable at this scale and this amount of training.</figcaption></figure>
+<p>Five models, identical in every respect except the precision of their linear layers, trained on the text of <em>Frankenstein</em> with byte-level tokens. All five learned. All five exported to packed artifacts that reloaded to bitwise-identical quantized values. The ternary model's body packed to 1.36 MB against full precision's 9.77 MB — the 7.2× ratio you would predict from 16 bits versus 1.58, arrived at by measuring real packed bytes rather than dividing.</p>
+<p>That run proved nothing about scaling laws. It proved the pipeline does not lie, which is the precondition for everything after it.</p>
+<h2 id="the-crossover-with-its-noise-floor-measured">The crossover, with its noise floor measured<a class="anchor" href="#the-crossover-with-its-noise-floor-measured" aria-label="Link to this section">#</a></h2>
+<p>The first real experiment used 28 runs at 3M and 6M parameters on FineWeb-Edu, comparing ternary against full precision at three training durations, with three seeds at 3M and two at 6M so run-to-run noise could be measured rather than assumed.</p>
+<table>
+<thead>
+<tr>
+  <th>Model</th>
+  <th style="text-align:right">Tokens/param</th>
+  <th style="text-align:right">Ternary BPB</th>
+  <th style="text-align:right">bf16 BPB</th>
+  <th style="text-align:right">Gap</th>
+  <th style="text-align:right">2σ bar</th>
+  <th>Verdict</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>3M</td>
+  <td style="text-align:right">20×</td>
+  <td style="text-align:right">2.0530</td>
+  <td style="text-align:right">2.1217</td>
+  <td style="text-align:right">−0.0687</td>
+  <td style="text-align:right">0.0409</td>
+  <td>ternary better</td>
+</tr>
+<tr>
+  <td>3M</td>
+  <td style="text-align:right">80×</td>
+  <td style="text-align:right">1.6381</td>
+  <td style="text-align:right">1.6204</td>
+  <td style="text-align:right">+0.0178</td>
+  <td style="text-align:right">0.1008</td>
+  <td>inside the noise</td>
+</tr>
+<tr>
+  <td>3M</td>
+  <td style="text-align:right">320×</td>
+  <td style="text-align:right">1.5003</td>
+  <td style="text-align:right">1.2591</td>
+  <td style="text-align:right">+0.2413</td>
+  <td style="text-align:right">0.0611</td>
+  <td>bf16 better</td>
+</tr>
+<tr>
+  <td>6M</td>
+  <td style="text-align:right">20×</td>
+  <td style="text-align:right">1.8718</td>
+  <td style="text-align:right">1.9089</td>
+  <td style="text-align:right">−0.0372</td>
+  <td style="text-align:right">0.1311</td>
+  <td>inside the noise</td>
+</tr>
+<tr>
+  <td>6M</td>
+  <td style="text-align:right">80×</td>
+  <td style="text-align:right">1.4885</td>
+  <td style="text-align:right">1.3210</td>
+  <td style="text-align:right">+0.1675</td>
+  <td style="text-align:right">0.1313</td>
+  <td>bf16 better</td>
+</tr>
+<tr>
+  <td>6M</td>
+  <td style="text-align:right">320×</td>
+  <td style="text-align:right">1.4035</td>
+  <td style="text-align:right">1.1716</td>
+  <td style="text-align:right">+0.2319</td>
+  <td style="text-align:right">one seed only</td>
+  <td>bf16 better</td>
+</tr>
+</tbody>
+</table>
+<p>Read the 3M row as a story in three acts. Undertrained, ternary wins by more than twice the noise bar. Around 80 tokens per parameter the two are indistinguishable and the honest answer is &quot;we cannot tell&quot;. By 320× full precision wins by four times the bar.</p>
+<figure class="fig"><picture><source srcset="figures/l0-bpb-dark.png" media="(prefers-color-scheme: dark)" class="dark-src"><img src="figures/l0-bpb.png" alt="Validation quality for both arms across training durations, at two model sizes. Faint dots are individual seeds." loading="lazy" data-light="figures/l0-bpb.png" data-dark="figures/l0-bpb-dark.png"></picture><figcaption>Validation quality for both arms across training durations, at two model sizes. Faint dots are individual seeds.</figcaption></figure>
+<p>Two further observations, both of which the fitted law will have to reproduce:</p>
+<p>The deficit <strong>grows without saturating</strong>. From 20× to 320× at 3M, the ternary gap moves −0.069 → +0.018 → +0.241, monotonically, with no sign of flattening. This is the shape reported for post-training quantization by Ouyang and colleagues, now observed for models trained low-bit from scratch.</p>
+<p>The deficit <strong>grows with model size at fixed training duration</strong>. At 80 tokens per parameter, ternary trails by 0.018 at 3M and by 0.168 at 6M. That interaction between size and training duration is exactly where the two candidate functional forms in <a href="14-fitting-the-law.html">Chapter 14</a> disagree, which means the fit will have something real to bite on rather than two equally good answers.</p>
+<h2 id="it-is-a-precision-effect-not-a-learning-rate-artifact">It is a precision effect, not a learning-rate artifact<a class="anchor" href="#it-is-a-precision-effect-not-a-learning-rate-artifact" aria-label="Link to this section">#</a></h2>
+<p>Ternary arms run at twice the learning rate of full-precision arms, following the BitNet recipe. That creates an obvious alternative explanation for the 20× result: maybe a higher learning rate helps when you train briefly, and precision has nothing to do with it.</p>
+<p>Twelve control runs settled it by crossing precision against learning rate at the contested cells.</p>
+<table>
+<thead>
+<tr>
+  <th>Cell</th>
+  <th style="text-align:right">ternary @2×</th>
+  <th style="text-align:right">ternary @1×</th>
+  <th style="text-align:right">bf16 @1×</th>
+  <th style="text-align:right">bf16 @2×</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>3M, 20×</td>
+  <td style="text-align:right"><strong>2.0530</strong></td>
+  <td style="text-align:right">2.1185</td>
+  <td style="text-align:right">2.1217</td>
+  <td style="text-align:right">2.1617</td>
+</tr>
+<tr>
+  <td>3M, 80×</td>
+  <td style="text-align:right">1.6381</td>
+  <td style="text-align:right">1.6532</td>
+  <td style="text-align:right"><strong>1.6204</strong></td>
+  <td style="text-align:right">1.6460</td>
+</tr>
+<tr>
+  <td>6M, 20×</td>
+  <td style="text-align:right"><strong>1.8718</strong></td>
+  <td style="text-align:right">—</td>
+  <td style="text-align:right">1.9089</td>
+  <td style="text-align:right">1.9297</td>
+</tr>
+<tr>
+  <td>6M, 80×</td>
+  <td style="text-align:right">1.4885</td>
+  <td style="text-align:right">—</td>
+  <td style="text-align:right"><strong>1.3210</strong></td>
+  <td style="text-align:right">1.3462</td>
+</tr>
+</tbody>
+</table>
+<p>Giving full precision the higher learning rate makes it <em>worse</em> in every cell tested. Running ternary at the lower rate erases its advantage entirely — at 3M and 20×, ternary at 1× scores 2.1185 against full precision's 2.1217, a difference of nothing. So each arm has a genuine preference, the preferences differ, and comparing each at its own best setting reproduces the original table unchanged. The crossover survives.</p>
+<aside class="callout callout-matters"><span class="callout-label">Why this matters</span><div class="callout-body"><p>This is the difference between a result and an artifact, and it cost twelve short runs to find out. The alternative explanation was cheap to test and would have invalidated the headline. Testing it was not optional.</p></div></aside>
+<h2 id="low-bit-training-barely-notices-a-mistuned-learning-rate">Low-bit training barely notices a mistuned learning rate<a class="anchor" href="#low-bit-training-barely-notices-a-mistuned-learning-rate" aria-label="Link to this section">#</a></h2>
+<p>Fifteen probe runs swept the learning rate across five precisions at 6M parameters. The intended output was a tuning rule. The interesting output was something else.</p>
+<figure class="fig"><picture><source srcset="figures/lr-sensitivity-dark.png" media="(prefers-color-scheme: dark)" class="dark-src"><img src="figures/lr-sensitivity.png" alt="Validation quality against learning-rate multiplier for all five precisions. Full precision rises steeply; the quantized arms are almost flat." loading="lazy" data-light="figures/lr-sensitivity.png" data-dark="figures/lr-sensitivity-dark.png"></picture><figcaption>Validation quality against learning-rate multiplier for all five precisions. Full precision rises steeply; the quantized arms are almost flat.</figcaption></figure>
+<p>Across a fourfold change in learning rate, full precision moved 0.191 bits per byte. Ternary and 2-bit moved 0.034 — five to six times less sensitive.</p>
+<p>The mechanism follows from what a quantizer is. Rounding to a fixed set of levels is a projection: it collapses a range of real values onto the same output. A larger optimizer step moves the master weight further, but unless it crosses a rounding boundary, the <em>effective</em> weight the model actually uses does not change at all. The quantizer absorbs a large part of the mistuning.</p>
+<p>The practical reading is the opposite of the folklore. Native low-bit training is often described as delicate. On this evidence it is more forgiving than full precision — you do not have to find the learning rate, you have to stay off a cliff, and the cliff is further away.</p>
+<p>The same probes also produced a warning about method, which <a href="10-designing-a-clean-experiment.html">Chapter 10</a> tells in full: three of the five arms had their best value at an <em>edge</em> of the probe grid, meaning the true optimum was never bracketed. Extra runs are extending the grid before any rule is frozen. A default that was never tested is not a measurement, and it is easy to mistake one for the other.</p>
+<h2 id="at-12m-parameters-every-low-bit-arm-beats-full-precision">At 12M parameters, every low-bit arm beats full precision<a class="anchor" href="#at-12m-parameters-every-low-bit-arm-beats-full-precision" aria-label="Link to this section">#</a></h2>
+<p>The first cell of the wider grid puts all five precisions head to head at 12M parameters and 20 tokens per parameter.</p>
+<figure class="fig"><picture><source srcset="figures/ladder-12m-dark.png" media="(prefers-color-scheme: dark)" class="dark-src"><img src="figures/ladder-12m.png" alt="All five precisions at 12M parameters and 20 tokens per parameter. Every quantized arm lands below full precision." loading="lazy" data-light="figures/ladder-12m.png" data-dark="figures/ladder-12m-dark.png"></picture><figcaption>All five precisions at 12M parameters and 20 tokens per parameter. Every quantized arm lands below full precision.</figcaption></figure>
+<table>
+<thead>
+<tr>
+  <th>Arm</th>
+  <th style="text-align:right">Validation BPB</th>
+  <th style="text-align:right">vs bf16</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>2-bit</td>
+  <td style="text-align:right">1.4945</td>
+  <td style="text-align:right">−0.104</td>
+</tr>
+<tr>
+  <td>4-bit</td>
+  <td style="text-align:right">1.4955</td>
+  <td style="text-align:right">−0.103</td>
+</tr>
+<tr>
+  <td>3-bit</td>
+  <td style="text-align:right">1.5153</td>
+  <td style="text-align:right">−0.083</td>
+</tr>
+<tr>
+  <td>ternary</td>
+  <td style="text-align:right">1.5201</td>
+  <td style="text-align:right">−0.078</td>
+</tr>
+<tr>
+  <td>bf16</td>
+  <td style="text-align:right">1.5982</td>
+  <td style="text-align:right">—</td>
+</tr>
+</tbody>
+</table>
+<p>Every quantized arm beats full precision, by margins of 0.078 to 0.104 bits per byte. The crossover seen for ternary at 3M and 6M is not a ternary quirk — it is a property of low-bit training in the undertrained regime, visible across the ladder.</p>
+<p>The ordering <em>among</em> the quantized arms is a different matter. These are single-seed runs, and the spread from best to worst quantized arm is 0.026 bits per byte — far inside the noise bar for a single seed at this size. So: no claim. 2-bit is not &quot;the best precision at 12M&quot; on this evidence, and treating that ordering as a finding would be exactly the error the 2σ rule exists to prevent.</p>
+<h2 id="what-the-data-cannot-yet-say">What the data cannot yet say<a class="anchor" href="#what-the-data-cannot-yet-say" aria-label="Link to this section">#</a></h2>
+<p>Being clear about the boundary matters as much as reporting the results.</p>
+<p><strong>There is no fitted law yet.</strong> The grid is still running. Nothing in this chapter tells you where the crossover sits for a 1-billion-parameter model or a 2 GB budget; extrapolating from six cells would be guessing with extra steps.</p>
+<p><strong>Nothing has been validated out of sample.</strong> The blind extrapolation test — freeze the fitted law, commit predictions with a timestamp, then train the 125M anchors and compare — has not run. Until it does, the law is a curve through points, not a tested prediction.</p>
+<p><strong>No downstream task results exist.</strong> At 3M to 12M parameters, benchmark scores are indistinguishable from guessing. They gate nothing here and are not reported.</p>
+<p><strong>The precision arms bundle three changes.</strong> A quantized arm differs from full precision in weight quantization, 8-bit activation quantization, and an extra normalization layer. An external reviewer flagged that a single 4-bit-weight, 16-bit-activation control run would separate the weight effect from the activation effect. That run is scheduled and has not happened.</p>
+<p><strong>The byte savings at these sizes are smaller than they look.</strong> The model <em>body</em> shrinks by up to eight times, but the embedding table stays 16-bit and dominates a small artifact. At 6M parameters the ternary body is 1.6 MB against a 16.8 MB embedding table — so the total artifact shrinks by roughly 1.6×, not 8×.</p>
+<figure class="fig"><picture><source srcset="figures/footprint-6m-dark.png" media="(prefers-color-scheme: dark)" class="dark-src"><img src="figures/footprint-6m.png" alt="Where the bytes actually go at 6M parameters: the body shrinks dramatically, the embedding table does not move." loading="lazy" data-light="figures/footprint-6m.png" data-dark="figures/footprint-6m-dark.png"></picture><figcaption>Where the bytes actually go at 6M parameters: the body shrinks dramatically, the embedding table does not move.</figcaption></figure>
+<p>This is why the project fits its laws on non-embedding parameters and states byte budgets as <em>body</em> bytes, and why both counts appear next to each other every time a footprint is quoted. At the scales where these models get deployed the embedding is a small fraction — but at the scales where the law is being fitted it is not, and pretending otherwise would inflate every claim.</p>
+<h2 id="what-to-remember">What to remember<a class="anchor" href="#what-to-remember" aria-label="Link to this section">#</a></h2>
+<p>The pipeline was verified end to end before any research claim was made, and the ternary-versus-full-precision crossover is now measured with a real noise floor: ternary wins at 20 tokens per parameter, loses by 320×, and the deficit grows monotonically with both training duration and model size. Control runs ruled out learning rate as the explanation, so the effect belongs to precision. A side finding is that quantized training is five to six times less sensitive to learning rate than full precision, which makes it cheaper to tune, not harder. At 12M parameters every low-bit arm beats full precision in the undertrained regime, though the ordering among them is inside the noise and is not claimed. No law has been fitted yet, nothing has been validated out of sample, and at these small sizes the embedding table limits how much of the body's byte savings reach the final artifact.</p>
+
+    </article>
+    <nav class="pager">
+      <a class="pager-prev" href="12-trusting-the-numbers.html"><span>Previous</span>12 · Trusting the numbers</a>
+      <a class="pager-next" href="14-fitting-the-law.html"><span>Next</span>14 · Fitting the law</a>
+    </nav>
+    <footer class="foot">
+      <p>Memory-optimal scaling laws for natively low-bit language models · <a href="https://github.com/canivel/logos">source and data on GitHub</a> · Apache-2.0</p>
+    </footer>
+  </main>
+</div>
+<script>
+(function () {
+  var root = document.documentElement;
+  var saved = localStorage.getItem('logos-theme');
+  if (saved) root.setAttribute('data-theme', saved);
+  function currentIsDark() {
+    var attr = root.getAttribute('data-theme');
+    if (attr) return attr === 'dark';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+  function syncFigures() {
+    var explicit = root.getAttribute('data-theme');
+    var dark = currentIsDark();
+    // A <source media="(prefers-color-scheme: dark)"> outranks the <img src>,
+    // so an explicit choice has to retarget the source too, not just the img.
+    document.querySelectorAll('figure.fig source.dark-src').forEach(function (s) {
+      s.media = explicit ? (dark ? 'all' : 'not all') : '(prefers-color-scheme: dark)';
+    });
+    document.querySelectorAll('figure.fig img').forEach(function (img) {
+      var want = dark ? img.dataset.dark : img.dataset.light;
+      if (want && img.getAttribute('src') !== want) img.setAttribute('src', want);
+    });
+  }
+  var btn = document.querySelector('.theme-toggle');
+  if (btn) btn.addEventListener('click', function () {
+    var next = currentIsDark() ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    localStorage.setItem('logos-theme', next);
+    syncFigures();
+  });
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', syncFigures);
+  syncFigures();
+  var navBtn = document.querySelector('.nav-toggle');
+  if (navBtn) navBtn.addEventListener('click', function () {
+    document.querySelector('.sidebar').classList.toggle('open');
+  });
+})();
+</script>
+</body>
+</html>

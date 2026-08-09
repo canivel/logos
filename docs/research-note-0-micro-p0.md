@@ -1,4 +1,4 @@
-# Research Note 0 — micro-P0: end-to-end replication of the ternary-vs-bf16 training dynamic at 4.7M parameters
+# Research Note 0 — micro-P0: end-to-end replication of the ternary-vs-bf16 training dynamic at 4.8M parameters
 
 *LOGOS project · August 5, 2026 · status: complete, panel-verified*
 
@@ -18,7 +18,7 @@ export → parity gate → results store → validation panel.
 
 | | |
 |---|---|
-| Model | `micro` ladder rung: d=256, 6 layers, GQA 4:1, SwiGLU, 4.72M non-emb params |
+| Model | `micro` ladder rung: d=256, 6 layers, GQA 4:1, SwiGLU, 4,816,896 non-embedding params |
 | Corpus | *Frankenstein* (Project Gutenberg), **byte-level** tokens (vocab 256), so BPB is exact by construction (1 token = 1 byte) |
 | Splits | contiguous 90/5/5: train 404,036 tokens · val1 22,446 · val2 22,447 (disjointness verified from the binary data by the panel) |
 | Training | 4.19M tokens (D/N ≈ 0.87 — deliberately *undertrained*), seq 256, batch 16,384 tok, cosine LR, bf16 autocast |

@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="en" data-theme-pref="system">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chapter 10 — Designing a Clean Experiment — LOGOS</title>
+<meta name="description" content="A scaling law is a curve fitted through a set of training runs, so it can never be more trustworthy than the runs beneath it. "Trustworthy" here is not a vague virtue; it is a set ">
+<meta property="og:title" content="Chapter 10 — Designing a Clean Experiment — LOGOS">
+<meta property="og:description" content="A scaling law is a curve fitted through a set of training runs, so it can never be more trustworthy than the runs beneath it. "Trustworthy" here is not a vague virtue; it is a set ">
+<meta property="og:type" content="article">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>▚</text></svg>">
+<link rel="stylesheet" href="assets/book.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="topbar">
+  <a class="brand" href="index.html"><span class="brand-mark">▚</span> LOGOS</a>
+  <div class="topbar-right">
+    <a class="topbar-link" href="https://github.com/canivel/logos">Repository</a>
+    <button class="theme-toggle" type="button" aria-label="Switch colour theme">◐</button>
+    <button class="nav-toggle" type="button" aria-label="Open chapter list">☰</button>
+  </div>
+</header>
+<div class="shell">
+  <nav class="sidebar" aria-label="Chapters">
+    
+      
+      <ul class="nav-list">
+      
+        <li><a href="index.html" >Start here</a></li>
+      
+      </ul>
+    
+      <div class="nav-part">Part I — Why this exists</div>
+      <ul class="nav-list">
+      
+        <li><a href="01-the-memory-wall.html" >1 · The memory wall</a></li>
+      
+        <li><a href="02-what-a-language-model-is.html" >2 · What a language model is</a></li>
+      
+        <li><a href="03-measuring-quality.html" >3 · Measuring quality</a></li>
+      
+      </ul>
+    
+      <div class="nav-part">Part II — The toolkit</div>
+      <ul class="nav-list">
+      
+        <li><a href="04-scaling-laws.html" >4 · Scaling laws</a></li>
+      
+        <li><a href="05-numbers-in-a-computer.html" >5 · Numbers in a computer</a></li>
+      
+        <li><a href="06-quantization.html" >6 · Quantization</a></li>
+      
+        <li><a href="07-training-in-low-precision.html" >7 · Training in low precision</a></li>
+      
+        <li><a href="08-the-kv-cache.html" >8 · The KV cache</a></li>
+      
+      </ul>
+    
+      <div class="nav-part">Part III — The research</div>
+      <ul class="nav-list">
+      
+        <li><a href="09-the-question.html" >9 · The question</a></li>
+      
+        <li><a href="10-designing-a-clean-experiment.html" class="current" aria-current="page">10 · Designing a clean experiment</a></li>
+      
+        <li><a href="11-building-the-machine.html" >11 · Building the machine</a></li>
+      
+        <li><a href="12-trusting-the-numbers.html" >12 · Trusting the numbers</a></li>
+      
+      </ul>
+    
+      <div class="nav-part">Part IV — Results & what's next</div>
+      <ul class="nav-list">
+      
+        <li><a href="13-what-we-found.html" >13 · What we found so far</a></li>
+      
+        <li><a href="14-fitting-the-law.html" >14 · Fitting the law</a></li>
+      
+        <li><a href="15-the-road-ahead.html" >15 · The road ahead</a></li>
+      
+      </ul>
+    
+      <div class="nav-part">Reference</div>
+      <ul class="nav-list">
+      
+        <li><a href="glossary.html" >Glossary</a></li>
+      
+      </ul>
+    
+  </nav>
+  <main id="main">
+    
+    <details class="toc">
+      <summary>On this page</summary>
+      <ul><li class="toc-l2"><a href="#the-runs-are-the-experiment">The runs are the experiment</a></li><li class="toc-l2"><a href="#rule-1-one-variable-moves-at-a-time">Rule 1 — One variable moves at a time</a></li><li class="toc-l2"><a href="#rule-2-n-means-non-embedding-parameters">Rule 2 — N means non-embedding parameters</a></li><li class="toc-l2"><a href="#rule-3-loss-fits-benchmarks-validate">Rule 3 — Loss fits, benchmarks validate</a></li><li class="toc-l2"><a href="#rule-4-measure-the-variance-before-you-make-a-claim">Rule 4 — Measure the variance before you make a claim</a></li><li class="toc-l2"><a href="#rule-5-same-data-order-everywhere">Rule 5 — Same data order everywhere</a></li><li class="toc-l2"><a href="#rule-6-comparability-beats-per-arm-maximum-performance">Rule 6 — Comparability beats per-arm maximum performance</a></li><li class="toc-l2"><a href="#rule-7-fit-forms-compete-and-the-winner-is-chosen-out-of-sample">Rule 7 — Fit forms compete, and the winner is chosen out-of-sample</a></li><li class="toc-l2"><a href="#the-confound-that-nearly-ate-the-headline">The confound that nearly ate the headline</a></li><li class="toc-l2"><a href="#the-second-catch-an-unexamined-default-is-a-claim">The second catch: an unexamined default is a claim</a></li><li class="toc-l2"><a href="#pre-registration-writing-the-prediction-down-first">Pre-registration: writing the prediction down first</a></li><li class="toc-l2"><a href="#what-to-remember">What to remember</a></li></ul>
+    </details>
+    
+    <article class="prose">
+      <h1 id="chapter-10-designing-a-clean-experiment">Chapter 10 — Designing a Clean Experiment<a class="anchor" href="#chapter-10-designing-a-clean-experiment" aria-label="Link to this section">#</a></h1>
+<p><em>A scaling law is a curve fitted through a set of training runs, so it can never be more trustworthy than the runs beneath it. &quot;Trustworthy&quot; here is not a vague virtue; it is a set of specific, boring rules, each invented because somebody once got burned without it. By the end of this chapter you will know the seven rules LOGOS runs by, you will be able to name the failure each one prevents, and you will have watched the project catch a confound that could have inverted its own headline result.</em></p>
+<h2 id="the-runs-are-the-experiment">The runs are the experiment<a class="anchor" href="#the-runs-are-the-experiment" aria-label="Link to this section">#</a></h2>
+<p>It is tempting to think of a scaling-law project as a fitting problem: gather losses, choose a form, turn a crank, out comes an equation. In practice the fitting takes an afternoon. The hard part is producing numbers that <em>deserve</em> to be fitted, because curve fitting does not know where its numbers came from. If one run got a slightly larger batch size, or saw its data in a different order, the fit absorbs that difference into its parameters and hands back a smooth, plausible, wrong curve. Nothing in the mathematics complains.</p>
+<p>So the discipline lives upstream, in how runs are specified. LOGOS states its rules in <a href="../docs/methodology.md"><code>docs/methodology.md</code></a> and attaches a <em>mechanical enforcement</em> to each, because a rule that lives only in a researcher's head is a rule that gets broken at 2am on the twenty-ninth run.</p>
+<aside class="callout callout-plain"><span class="callout-label">In plain terms</span><div class="callout-body"><p>the law is a summary of the experiments. If the experiments are inconsistent with each other, the summary is fiction, and the fitting step will not tell you.</p></div></aside>
+<h2 id="rule-1-one-variable-moves-at-a-time">Rule 1 — One variable moves at a time<a class="anchor" href="#rule-1-one-variable-moves-at-a-time" aria-label="Link to this section">#</a></h2>
+<p>An <strong>arm</strong> is one configuration in a comparison: the ternary arm, the 4-bit arm, the bf16 arm. LOGOS holds architecture, tokenizer, data, <em>data order</em>, optimizer, and schedule identical across every arm at a given size and token budget. The only permitted difference is the precision of the linear layers, plus the learning-rate multiplier that precision is assigned.</p>
+<p>Picture the failure. Suppose the ternary run had also used a larger batch size, because ternary training was memory-cheap and it seemed a shame to waste the headroom. You measure ternary at 0.07 bits-per-byte better than bf16. What have you learned? Nothing statable. The difference could be precision, could be batch size, could be the two cancelling, and you cannot subtract one out because you only ran the corner where both moved. That is not weak evidence, it is <em>uninterpretable</em> evidence.</p>
+<p>Mechanically: every linear layer is created by one function, <code>build_linear()</code>, returning either a quantized module or a plain <code>nn.Linear</code> (<a href="11-building-the-machine.html">Chapter 11</a>). There is exactly one code path where arms diverge, and unit tests assert that the bf16 model contains zero quantization modules and that all arms start from identical master weights.</p>
+<h2 id="rule-2-n-means-non-embedding-parameters">Rule 2 — N means non-embedding parameters<a class="anchor" href="#rule-2-n-means-non-embedding-parameters" aria-label="Link to this section">#</a></h2>
+<p>Every scaling law has an N in it (<a href="04-scaling-laws.html">Chapter 4</a>). LOGOS defines N as the <strong>non-embedding parameter count</strong>: the weights inside the transformer blocks, excluding the token embedding table. Both counts are reported everywhere.</p>
+<p>Why be pedantic? Because at small scale the embedding dominates. LOGOS uses a fixed 32,768-entry vocabulary across the whole ladder, so at width 256 that table alone is about 8.4M parameters while the &quot;3M&quot; model's body is about 3.2M. Call that model &quot;11M&quot; and the 60M model &quot;80M&quot;, and <em>parameters</em> now means two very different mixtures at the two ends of your ladder; the exponent you fit would partly measure the shrinking embedding fraction rather than the physics you care about. Hence the standing disclosure: the tied embedding is 84% of a ternary 25M export, and byte budgets at this scale are <em>body</em>-byte budgets.</p>
+<aside class="callout callout-matters"><span class="callout-label">Why this matters</span><div class="callout-body"><p>an ambiguous definition never announces itself. It quietly rescales your x-axis, and the fit comes out looking fine.</p></div></aside>
+<h2 id="rule-3-loss-fits-benchmarks-validate">Rule 3 — Loss fits, benchmarks validate<a class="anchor" href="#rule-3-loss-fits-benchmarks-validate" aria-label="Link to this section">#</a></h2>
+<p>LOGOS fits its law to <strong>bits-per-byte (BPB)</strong>, held-out loss normalized by UTF-8 bytes rather than tokens so different tokenizers stay comparable (<a href="03-measuring-quality.html">Chapter 3</a>). Downstream benchmarks are kept for validation only, on a <em>second, disjoint</em> held-out set, and never enter the fit.</p>
+<p>This is a question of measurement resolution. Below roughly 60M parameters, benchmark scores sit near chance and jitter wildly between seeds. Fit a curve to that and you are mostly fitting noise, with no independent signal left to check the fit against. The cost is accepted openly: at these sizes, benchmarks gate nothing.</p>
+<h2 id="rule-4-measure-the-variance-before-you-make-a-claim">Rule 4 — Measure the variance before you make a claim<a class="anchor" href="#rule-4-measure-the-variance-before-you-make-a-claim" aria-label="Link to this section">#</a></h2>
+<p>This is the rule with teeth. Train one configuration twice with different weight-initialization seeds and you get two different losses. The spread is <strong>seed noise</strong>, its standard deviation written sigma. LOGOS measured sigma directly at 3M and 6M by running multiple seeds per cell: between 0.006 and 0.066 BPB depending on the cell, and 0.0519 BPB at 6M.</p>
+<p>Now the arithmetic. Comparing two single-seed runs means looking at a <em>difference</em> of two noisy numbers, and a difference of two independent draws has standard deviation sigma times the square root of 2. LOGOS requires a gap to clear two of those. At 6M the bar is 2 × 0.0519 × 1.414, about 0.147 BPB. Anything smaller is reported as observed and explicitly not claimed.</p>
+<p>Here is the real L0 table, ternary minus bf16, with each cell's own 2-sigma bar:</p>
+<table>
+<thead>
+<tr>
+  <th>Cell</th>
+  <th style="text-align:right">gap (ternary − bf16), BPB</th>
+  <th style="text-align:right">2σ</th>
+  <th>verdict</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>3M @ 20×</td>
+  <td style="text-align:right">−0.0687</td>
+  <td style="text-align:right">0.0409</td>
+  <td>ternary better, significant</td>
+</tr>
+<tr>
+  <td>3M @ 80×</td>
+  <td style="text-align:right">+0.0178</td>
+  <td style="text-align:right">0.1008</td>
+  <td>within noise</td>
+</tr>
+<tr>
+  <td>3M @ 320×</td>
+  <td style="text-align:right">+0.2413</td>
+  <td style="text-align:right">0.0611</td>
+  <td>bf16 better, significant</td>
+</tr>
+<tr>
+  <td>6M @ 20×</td>
+  <td style="text-align:right">−0.0372</td>
+  <td style="text-align:right">0.1311</td>
+  <td>within noise</td>
+</tr>
+<tr>
+  <td>6M @ 80×</td>
+  <td style="text-align:right">+0.1675</td>
+  <td style="text-align:right">0.1313</td>
+  <td>bf16 better, significant</td>
+</tr>
+<tr>
+  <td>6M @ 320×</td>
+  <td style="text-align:right">+0.2319</td>
+  <td style="text-align:right">(1 seed; 3M σ implies ~0.06)</td>
+  <td>bf16 better, beyond borrowed 2σ</td>
+</tr>
+</tbody>
+</table>
+<p>Two of the six cells fall inside their noise bar and are not claimed — including the −0.0372 at 6M/20×, which has the sign the project's thesis would like. Without measured sigma, both would have been reported as small real effects. That is exactly why the rule must be in place beforehand: inventing it afterwards is indistinguishable from rationalizing. Enforcement is mechanical, and a verification probe recomputes sigma by hand from raw result rows and rejects any significance flag on a single-seed cell.</p>
+<h2 id="rule-5-same-data-order-everywhere">Rule 5 — Same data order everywhere<a class="anchor" href="#rule-5-same-data-order-everywhere" aria-label="Link to this section">#</a></h2>
+<p>Every arm at a given size does not merely see the same <em>dataset</em>. It sees the same tokens, in the same order, in the same batches, at the same steps. The loader draws a fixed permutation seeded by <code>data_seed</code>, frozen at 1337 for the whole project, so a bf16 run and a ternary run at 3M and 20 tokens per parameter consume byte-identical streams.</p>
+<p>The failure without this is subtle. Text is not uniform; a batch of dense technical prose moves the loss differently from a batch of forum chatter. If arms shuffle differently, their curves differ for reasons unrelated to precision, and at gaps of 0.02 to 0.07 BPB that is not negligible. Fixing the order removes the nuisance term instead of hoping it averages out. Because &quot;byte-identical&quot; is easy to assert and easy to get wrong, it is tested rather than asserted (<a href="12-trusting-the-numbers.html">Chapter 12</a>).</p>
+<h2 id="rule-6-comparability-beats-per-arm-maximum-performance">Rule 6 — Comparability beats per-arm maximum performance<a class="anchor" href="#rule-6-comparability-beats-per-arm-maximum-performance" aria-label="Link to this section">#</a></h2>
+<p>A two-stage learning-rate schedule is known to squeeze extra quality out of ternary models. LOGOS does not use it in the grid. Every arm gets one single-stage cosine schedule.</p>
+<p>That is a deliberate sacrifice: the ternary arms are almost certainly slightly worse than they could be. But a ternary arm on a two-stage schedule against a bf16 arm on a one-stage schedule is contaminated exactly as Rule 1 forbids, and the fitted precision term would be part quantization physics and part schedule. The better recipe is reserved for the final released model, where the goal is a good model rather than a clean contrast, and the bias is documented rather than hidden.</p>
+<aside class="callout callout-aside"><span class="callout-label">Worth knowing</span><div class="callout-body"><p>documenting a known bias is not weaker than eliminating it. It is what lets someone else quantify it later. A hidden bias cannot be corrected by anyone.</p></div></aside>
+<h2 id="rule-7-fit-forms-compete-and-the-winner-is-chosen-out-of-sample">Rule 7 — Fit forms compete, and the winner is chosen out-of-sample<a class="anchor" href="#rule-7-fit-forms-compete-and-the-winner-is-chosen-out-of-sample" aria-label="Link to this section">#</a></h2>
+<p>LOGOS does not assume a functional form. It writes down two candidates encoding genuinely different physical stories — one where low precision effectively shrinks the model, one where it adds a separate penalty that grows with training (<a href="09-the-question.html">Chapter 9</a>) — and makes them compete.</p>
+<p>The competition is not decided by which fits existing data better, since any form with more freedom can hug points you already have. Selection is by <strong>leave-one-size-out</strong>: fit each form with one model size removed entirely, then score by how well it predicts that withheld size. A form that wins there has demonstrated the only thing a scaling law is for. <a href="14-fitting-the-law.html">Chapter 14</a> covers the machinery; what matters here is that the rule was fixed before any grid data existed.</p>
+<h2 id="the-confound-that-nearly-ate-the-headline">The confound that nearly ate the headline<a class="anchor" href="#the-confound-that-nearly-ate-the-headline" aria-label="Link to this section">#</a></h2>
+<p>Ternary arms in LOGOS run at twice the bf16 learning rate. That comes from the BitNet line of work (<a href="07-training-in-low-precision.html">Chapter 7</a>), where quantized training wants larger steps. But adopting it means two things move between the ternary and bf16 arms: precision, and learning rate. The protocol itself violates Rule 1.</p>
+<p>Mostly this would be a technicality. At 20 tokens per parameter it was not, because a larger learning rate is <em>also</em> known to help when a model is undertrained. So the early headline — ternary significantly beats bf16 at 20 tokens per parameter — was indistinguishable from a far less interesting claim: a 2× learning rate beats a 1× rate when you stop early. An external reviewer named this the largest scientific risk to the project (<a href="12-trusting-the-numbers.html">Chapter 12</a>).</p>
+<p>The fix was twelve control runs on the same frozen corpus slice, fully crossing precision against learning rate at the contested cells:</p>
+<table>
+<thead>
+<tr>
+  <th>Cell</th>
+  <th style="text-align:right">ternary @2×</th>
+  <th style="text-align:right">ternary @1×</th>
+  <th style="text-align:right">bf16 @1×</th>
+  <th style="text-align:right">bf16 @2×</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>3M @ 20×</td>
+  <td style="text-align:right"><strong>2.0530</strong></td>
+  <td style="text-align:right">2.1185</td>
+  <td style="text-align:right">2.1217</td>
+  <td style="text-align:right">2.1617</td>
+</tr>
+<tr>
+  <td>3M @ 80×</td>
+  <td style="text-align:right">1.6381</td>
+  <td style="text-align:right">1.6532</td>
+  <td style="text-align:right"><strong>1.6204</strong></td>
+  <td style="text-align:right">1.6460</td>
+</tr>
+<tr>
+  <td>6M @ 20×</td>
+  <td style="text-align:right"><strong>1.8718</strong></td>
+  <td style="text-align:right">—</td>
+  <td style="text-align:right">1.9089</td>
+  <td style="text-align:right">1.9297</td>
+</tr>
+<tr>
+  <td>6M @ 80×</td>
+  <td style="text-align:right">1.4885</td>
+  <td style="text-align:right">—</td>
+  <td style="text-align:right"><strong>1.3210</strong></td>
+  <td style="text-align:right">1.3462</td>
+</tr>
+</tbody>
+</table>
+<p>Read the last column first. Giving bf16 the doubled learning rate made it <em>worse</em> in every cell tested: 2.1617 against 2.1217 at 3M/20×, 1.9297 against 1.9089 at 6M/20×, 1.6460 against 1.6204 at 3M/80×, 1.3462 against 1.3210 at 6M/80×. The alternative explanation does not merely lack support, it points backwards. The second column closes the other half: ternary at the bf16 rate loses its 20× advantage completely, 2.1185 against bf16's 2.1217, far inside the noise bar.</p>
+<p>The conclusion follows. The crossover is a precision effect; ternary genuinely needs its larger steps, which converts the BitNet prior from an assumption into a measurement; and since the best per-arm rate is 1× for bf16 and 2× for ternary, the best-versus-best comparison a referee would demand reproduces the main table exactly.</p>
+<h2 id="the-second-catch-an-unexamined-default-is-a-claim">The second catch: an unexamined default is a claim<a class="anchor" href="#the-second-catch-an-unexamined-default-is-a-claim" aria-label="Link to this section">#</a></h2>
+<p>That could have been the end of it. The follow-up is the sharper lesson. To set multipliers for the other precisions, LOGOS ran fifteen probes at 6M parameters and 200M tokens, sweeping the multiplier over {1×, 2×, 4×} for each precision.</p>
+<figure class="fig"><picture><source srcset="figures/lr-sensitivity-dark.png" media="(prefers-color-scheme: dark)" class="dark-src"><img src="figures/lr-sensitivity.png" alt="Validation bits-per-byte against learning-rate multiplier for all five precision arms at 6M parameters. The bf16 curve is steep; the ternary and 2-bit curves are nearly flat across the same fourfold range." loading="lazy" data-light="figures/lr-sensitivity.png" data-dark="figures/lr-sensitivity-dark.png"></picture><figcaption>Validation BPB versus learning-rate multiplier, five precision arms, 6M parameters, 200M tokens, one seed each. Lower is better. The headline is the flatness, not the minima.</figcaption></figure>
+<table>
+<thead>
+<tr>
+  <th>arm</th>
+  <th style="text-align:right">1×</th>
+  <th style="text-align:right">2×</th>
+  <th style="text-align:right">4×</th>
+  <th style="text-align:right">spread</th>
+  <th>best</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>ternary</td>
+  <td style="text-align:right">1.7351</td>
+  <td style="text-align:right"><strong>1.7010</strong></td>
+  <td style="text-align:right">1.7275</td>
+  <td style="text-align:right">0.034</td>
+  <td>2×</td>
+</tr>
+<tr>
+  <td>2-bit</td>
+  <td style="text-align:right"><strong>1.6460</strong></td>
+  <td style="text-align:right">1.6637</td>
+  <td style="text-align:right">1.6799</td>
+  <td style="text-align:right">0.034</td>
+  <td>1× (edge)</td>
+</tr>
+<tr>
+  <td>3-bit</td>
+  <td style="text-align:right">1.6601</td>
+  <td style="text-align:right"><strong>1.6125</strong></td>
+  <td style="text-align:right">1.6597</td>
+  <td style="text-align:right">0.048</td>
+  <td>2×</td>
+</tr>
+<tr>
+  <td>4-bit</td>
+  <td style="text-align:right">1.7134</td>
+  <td style="text-align:right">1.6920</td>
+  <td style="text-align:right"><strong>1.6216</strong></td>
+  <td style="text-align:right">0.092</td>
+  <td>4× (edge)</td>
+</tr>
+<tr>
+  <td>bf16</td>
+  <td style="text-align:right"><strong>1.6792</strong></td>
+  <td style="text-align:right">1.7259</td>
+  <td style="text-align:right">1.8705</td>
+  <td style="text-align:right"><strong>0.191</strong></td>
+  <td>1× (edge)</td>
+</tr>
+</tbody>
+</table>
+<p>The spread column holds a genuine finding, discussed in <a href="07-training-in-low-precision.html">Chapter 7</a> and revisited in <a href="13-what-we-found.html">Chapter 13</a>: across a fourfold range of learning rates, full precision moves 0.191 BPB while ternary and 2-bit move 0.034.</p>
+<p>But look at the &quot;best&quot; column. Three of five arms have their best value <strong>at an edge of the probe grid</strong>. To <strong>bracket</strong> a minimum means having measured points on both sides of it; these three are unbracketed, so what looks like an optimum is really the direction of an optimum you did not reach.</p>
+<p>The bf16 case is dangerous in a specific direction. If full precision actually prefers something below 1×, then bf16 has been running handicapped in every comparison so far, and the ternary advantage at 20 tokens per parameter is inflated. Notice the control runs do not catch this. They tested bf16 at 2×, found it worse, and never looked below 1×. A careful fix for one confound left a neighbour standing.</p>
+<p>So the grid is being extended before the rule freezes: twelve more runs adding 0.5× for every arm, 0.25× for bf16 and 2-bit, 8× for 4-bit, plus two extra seeds on the 4-bit comparison that is the largest difference still inside the noise bar. Until they land, the multiplier rule is written down as <em>provisional</em>, with an explicit freeze principle — deviate from the prior only on significant evidence — rather than read off unbracketed minima.</p>
+<p>The general lesson deserves its own sentence. <strong>An unexamined default silently becomes a claim.</strong> The grid {1×, 2×, 4×} was chosen as a reasonable sweep, not as an assertion about where the optimum lives. The moment a number is read off it and frozen into the protocol, the grid's boundaries become part of every downstream result, invisibly.</p>
+<h2 id="pre-registration-writing-the-prediction-down-first">Pre-registration: writing the prediction down first<a class="anchor" href="#pre-registration-writing-the-prediction-down-first" aria-label="Link to this section">#</a></h2>
+<p>One rule remains, and it governs the project's central credibility test. LOGOS plans to fit its law on models from 3M to 60M and then predict the loss of a 125M model it has not trained. Before those validation runs launch, the fit is frozen and its predictions — a BPB number per anchor arm, with the sigma-implied band — are committed to the repository with a timestamp.</p>
+<p>This is <strong>pre-registration</strong>, and its purpose is not ceremony. Fitting involves dozens of small judgment calls: which rows to include, how to weight them, whether an outlier is a bad run or real data. Each is defensible in isolation. Make them <em>after</em> seeing the anchor results and you will unconsciously make the ones that pull the prediction toward what you already know, experiencing the whole thing as ordinary diligence. The only reliable defence is to make the calls while the answer is genuinely unavailable, and leave a timestamped record proving it. The acceptance bar is stated in advance too: anchors must land within twice the seed-sigma band, and the predicted ordering of precisions must be correct. A miss gets reported as a bend in the law rather than quietly absorbed. No anchors have been run and no law has been fitted; what exists today is the protocol and the code that checks it.</p>
+<h2 id="what-to-remember">What to remember<a class="anchor" href="#what-to-remember" aria-label="Link to this section">#</a></h2>
+<p>Seven rules, one theme: a fitted law's credibility is built before any fitting happens, by ensuring every run differs from every other in exactly the ways you intend and no others. One variable moves at a time, N always means the same thing, loss fits while benchmarks validate, nothing is claimed inside its measured noise, data order is frozen project-wide, comparability outranks squeezing the last drop from any single arm, and the form is chosen by out-of-sample prediction. The learning-rate confound shows why the rules cannot be applied casually: the project's own protocol violated Rule 1, twelve control runs were needed to show the headline was a precision effect, and the follow-up found three of five probe optima on an unbracketed grid edge. Both catches came from looking deliberately, not from anything going visibly wrong. That is the whole craft, because a wrong number in this business does not look wrong. It looks like a result.</p>
+
+    </article>
+    <nav class="pager">
+      <a class="pager-prev" href="09-the-question.html"><span>Previous</span>9 · The question</a>
+      <a class="pager-next" href="11-building-the-machine.html"><span>Next</span>11 · Building the machine</a>
+    </nav>
+    <footer class="foot">
+      <p>Memory-optimal scaling laws for natively low-bit language models · <a href="https://github.com/canivel/logos">source and data on GitHub</a> · Apache-2.0</p>
+    </footer>
+  </main>
+</div>
+<script>
+(function () {
+  var root = document.documentElement;
+  var saved = localStorage.getItem('logos-theme');
+  if (saved) root.setAttribute('data-theme', saved);
+  function currentIsDark() {
+    var attr = root.getAttribute('data-theme');
+    if (attr) return attr === 'dark';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+  function syncFigures() {
+    var explicit = root.getAttribute('data-theme');
+    var dark = currentIsDark();
+    // A <source media="(prefers-color-scheme: dark)"> outranks the <img src>,
+    // so an explicit choice has to retarget the source too, not just the img.
+    document.querySelectorAll('figure.fig source.dark-src').forEach(function (s) {
+      s.media = explicit ? (dark ? 'all' : 'not all') : '(prefers-color-scheme: dark)';
+    });
+    document.querySelectorAll('figure.fig img').forEach(function (img) {
+      var want = dark ? img.dataset.dark : img.dataset.light;
+      if (want && img.getAttribute('src') !== want) img.setAttribute('src', want);
+    });
+  }
+  var btn = document.querySelector('.theme-toggle');
+  if (btn) btn.addEventListener('click', function () {
+    var next = currentIsDark() ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    localStorage.setItem('logos-theme', next);
+    syncFigures();
+  });
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', syncFigures);
+  syncFigures();
+  var navBtn = document.querySelector('.nav-toggle');
+  if (navBtn) navBtn.addEventListener('click', function () {
+    document.querySelector('.sidebar').classList.toggle('open');
+  });
+})();
+</script>
+</body>
+</html>

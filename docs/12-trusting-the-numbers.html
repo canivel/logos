@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="en" data-theme-pref="system">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chapter 12 — Trusting the Numbers — LOGOS</title>
+<meta name="description" content="Software testing asks whether code does what its author meant. Research code has a nastier failure mode: the author meant the wrong thing, and the code obeys perfectly. This chapte">
+<meta property="og:title" content="Chapter 12 — Trusting the Numbers — LOGOS">
+<meta property="og:description" content="Software testing asks whether code does what its author meant. Research code has a nastier failure mode: the author meant the wrong thing, and the code obeys perfectly. This chapte">
+<meta property="og:type" content="article">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>▚</text></svg>">
+<link rel="stylesheet" href="assets/book.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="topbar">
+  <a class="brand" href="index.html"><span class="brand-mark">▚</span> LOGOS</a>
+  <div class="topbar-right">
+    <a class="topbar-link" href="https://github.com/canivel/logos">Repository</a>
+    <button class="theme-toggle" type="button" aria-label="Switch colour theme">◐</button>
+    <button class="nav-toggle" type="button" aria-label="Open chapter list">☰</button>
+  </div>
+</header>
+<div class="shell">
+  <nav class="sidebar" aria-label="Chapters">
+    
+      
+      <ul class="nav-list">
+      
+        <li><a href="index.html" >Start here</a></li>
+      
+      </ul>
+    
+      <div class="nav-part">Part I — Why this exists</div>
+      <ul class="nav-list">
+      
+        <li><a href="01-the-memory-wall.html" >1 · The memory wall</a></li>
+      
+        <li><a href="02-what-a-language-model-is.html" >2 · What a language model is</a></li>
+      
+        <li><a href="03-measuring-quality.html" >3 · Measuring quality</a></li>
+      
+      </ul>
+    
+      <div class="nav-part">Part II — The toolkit</div>
+      <ul class="nav-list">
+      
+        <li><a href="04-scaling-laws.html" >4 · Scaling laws</a></li>
+      
+        <li><a href="05-numbers-in-a-computer.html" >5 · Numbers in a computer</a></li>
+      
+        <li><a href="06-quantization.html" >6 · Quantization</a></li>
+      
+        <li><a href="07-training-in-low-precision.html" >7 · Training in low precision</a></li>
+      
+        <li><a href="08-the-kv-cache.html" >8 · The KV cache</a></li>
+      
+      </ul>
+    
+      <div class="nav-part">Part III — The research</div>
+      <ul class="nav-list">
+      
+        <li><a href="09-the-question.html" >9 · The question</a></li>
+      
+        <li><a href="10-designing-a-clean-experiment.html" >10 · Designing a clean experiment</a></li>
+      
+        <li><a href="11-building-the-machine.html" >11 · Building the machine</a></li>
+      
+        <li><a href="12-trusting-the-numbers.html" class="current" aria-current="page">12 · Trusting the numbers</a></li>
+      
+      </ul>
+    
+      <div class="nav-part">Part IV — Results & what's next</div>
+      <ul class="nav-list">
+      
+        <li><a href="13-what-we-found.html" >13 · What we found so far</a></li>
+      
+        <li><a href="14-fitting-the-law.html" >14 · Fitting the law</a></li>
+      
+        <li><a href="15-the-road-ahead.html" >15 · The road ahead</a></li>
+      
+      </ul>
+    
+      <div class="nav-part">Reference</div>
+      <ul class="nav-list">
+      
+        <li><a href="glossary.html" >Glossary</a></li>
+      
+      </ul>
+    
+  </nav>
+  <main id="main">
+    
+    <details class="toc">
+      <summary>On this page</summary>
+      <ul><li class="toc-l2"><a href="#the-bugs-that-pass-every-test">The bugs that pass every test</a></li><li class="toc-l2"><a href="#the-panel">The panel</a></li><li class="toc-l2"><a href="#commitment-one-independence">Commitment one: independence</a></li><li class="toc-l2"><a href="#commitment-two-the-gate-is-locked-before-the-result-is-seen">Commitment two: the gate is locked before the result is seen</a></li><li class="toc-l2"><a href="#four-probes-up-close">Four probes up close</a></li><li class="toc-l2"><a href="#six-defects-six-lessons">Six defects, six lessons</a></li><li class="toc-l2"><a href="#the-follow-up-tolerances-do-not-transfer">The follow-up: tolerances do not transfer</a></li><li class="toc-l2"><a href="#a-second-kind-of-review-the-direction-not-the-code">A second kind of review: the direction, not the code</a></li><li class="toc-l2"><a href="#the-rule-that-makes-it-mean-something">The rule that makes it mean something</a></li><li class="toc-l2"><a href="#what-to-remember">What to remember</a></li></ul>
+    </details>
+    
+    <article class="prose">
+      <h1 id="chapter-12-trusting-the-numbers">Chapter 12 — Trusting the Numbers<a class="anchor" href="#chapter-12-trusting-the-numbers" aria-label="Link to this section">#</a></h1>
+<p><em>Software testing asks whether code does what its author meant. Research code has a nastier failure mode: the author meant the wrong thing, and the code obeys perfectly. This chapter is about the layer LOGOS built to catch that — eleven independent probes behind forty-nine kill gates, cryptographically locked before anyone looks at the results. You will see what &quot;independent&quot; means in practice, why locking a pass/fail rule in advance is the same idea as pre-registering a clinical trial, and what six real defects looked like before they were found.</em></p>
+<h2 id="the-bugs-that-pass-every-test">The bugs that pass every test<a class="anchor" href="#the-bugs-that-pass-every-test" aria-label="Link to this section">#</a></h2>
+<p>Imagine your bits-per-byte evaluator divides by the wrong denominator — the token count instead of the UTF-8 byte count. Every unit test you would naturally write still passes. The function returns a float. It is positive. It falls as the model trains. It is stable across reruns. Every property a reasonable test asserts holds, and every number the pipeline produces is wrong by a constant factor that survives into a fitted exponent.</p>
+<p>That is the characteristic shape of a research bug: no crash, no NaN, nothing suspicious, just plausible numbers. Ordinary tests are blind to it because they encode the same understanding that produced it. The author writes test and implementation from one mental model, and if the model is wrong, both are wrong together and agree with each other beautifully.</p>
+<aside class="callout callout-plain"><span class="callout-label">In plain terms</span><div class="callout-body"><p>a unit test checks the code against its author's intention. Nothing in a normal test suite checks the intention.</p></div></aside>
+<p>The only defence is a second, deliberately separate derivation of the same quantity, produced without looking at the first, plus a rule written in advance for what counts as agreement.</p>
+<h2 id="the-panel">The panel<a class="anchor" href="#the-panel" aria-label="Link to this section">#</a></h2>
+<p>LOGOS calls that layer the <strong>validation panel</strong>. It lives in <code>validation/</code>, entirely outside <code>src/logos/</code>, and runs with one command: <code>logos-validate --all</code>.</p>
+<p>It holds eleven <strong>probes</strong>, each responsible for one load-bearing quantity, and each declaring a few <strong>kill gates</strong> — specific, falsifiable pass/fail conditions. Forty-nine gates in total. A probe returns <strong>ACCEPT</strong> when every gate passed, <strong>REJECT</strong> when one failed, or <strong>VOID</strong> when it could not run or its gates were altered after locking. VOID counts as REJECT for release purposes.</p>
+<table>
+<thead>
+<tr>
+  <th>Probe</th>
+  <th>What it verifies</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><code>quant_numerics</code></td>
+  <td>Quantizers produce the claimed level sets, scales, and error bounds</td>
+</tr>
+<tr>
+  <td><code>ste_gradients</code></td>
+  <td>The straight-through estimator is identity in the clip region, zero outside</td>
+</tr>
+<tr>
+  <td><code>data_order</code></td>
+  <td>Arms consume bit-identical token streams; resume does not fork the stream</td>
+</tr>
+<tr>
+  <td><code>bpb_definition</code></td>
+  <td>The BPB runner matches the definition, including partial windows</td>
+</tr>
+<tr>
+  <td><code>export_parity</code></td>
+  <td>A packed artifact reloads to bit-identical weights</td>
+</tr>
+<tr>
+  <td><code>footprint</code></td>
+  <td>Measured packed bytes match the format's exact bit arithmetic</td>
+</tr>
+<tr>
+  <td><code>fit_recovery</code></td>
+  <td>The fitter recovers known laws; selection picks the true form</td>
+</tr>
+<tr>
+  <td><code>stats_discipline</code></td>
+  <td>Sigma is a real standard deviation; no single-seed cell is &quot;significant&quot;</td>
+</tr>
+<tr>
+  <td><code>manifest_integrity</code></td>
+  <td>Result hashes match manifest entries; ledger caps really refuse</td>
+</tr>
+<tr>
+  <td><code>benchmark_pinning</code></td>
+  <td>The harness version pin is enforced; validation splits are disjoint</td>
+</tr>
+<tr>
+  <td><code>training_sanity</code></td>
+  <td>Real run curves are finite, gapless, correctly accounted, resume-identical</td>
+</tr>
+</tbody>
+</table>
+<p>Round 1 ran on August 5, 2026 and returned ACCEPT on all eleven probes and all forty-nine gates — after fixing six real defects it found along the way. The roster with each probe's independent reference lives in <a href="../validation/README.md"><code>validation/README.md</code></a>.</p>
+<h2 id="commitment-one-independence">Commitment one: independence<a class="anchor" href="#commitment-one-independence" aria-label="Link to this section">#</a></h2>
+<p>A probe must re-derive the quantity it checks from first principles. It may <em>call</em> the code under test to obtain the value being checked. It may never call that code to compute what the value should be.</p>
+<p>This sounds pedantic until you picture the alternative. A probe that verifies the ternary quantizer by calling the ternary quantizer and comparing the result to itself will pass forever, including on the day the equation is wrong. It checks nothing except determinism. The panel's README puts it bluntly: such a probe &quot;is worthless and gets rejected in review.&quot;</p>
+<p>Independence takes five concrete shapes here. Reimplementing the mathematics in plain NumPy from the equations in the source papers. Deriving gradients by hand and checking them against finite differences. Writing a separate decoder for a binary format from its specification. Constructing a case whose answer is known in closed form. Generating synthetic data from parameters the code under test never sees, then asking whether it can find them again.</p>
+<p>There is an organizational version of the same idea: the round-1 probes were written by three separate builder agents working against the locked contract, none of whom had authored the subsystems they were verifying. That is the software equivalent of not letting a lab grade its own samples.</p>
+<h2 id="commitment-two-the-gate-is-locked-before-the-result-is-seen">Commitment two: the gate is locked before the result is seen<a class="anchor" href="#commitment-two-the-gate-is-locked-before-the-result-is-seen" aria-label="Link to this section">#</a></h2>
+<p>Each probe declares its gates in advance, in words. The gate specification is then hashed with sha256 and the hash written into <code>validation/locks/</code>, timestamped, before any results are examined. Here is a real lock, for the BPB probe:</p>
+<div class="hl"><pre><span></span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;probe&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;bpb_definition&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;sha256&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;bd8a5c58fd6f3ca953e17ea8b48e1d8178f1a6b4aa16f53102b8ccd9fc5fd564&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;gates&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">[</span><span class="s2">&quot;G1&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;uniform-logits closed form: constant-zero-logit model gives</span>
+<span class="s2">            BPB = T*log2(V)/B ... within 1e-9&quot;</span><span class="p">],</span>
+<span class="w">    </span><span class="p">[</span><span class="s2">&quot;G2&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;trained tiny model: bpb() matches the independent per-token</span>
+<span class="s2">            NLL loop within 1e-6 bits/byte, incl. a partial final window&quot;</span><span class="p">],</span>
+<span class="w">    </span><span class="err">...</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;registered&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2026-08-05 19:44:04&quot;</span><span class="w"> </span><span class="p">}</span>
+</pre></div>
+<p>Change the gate text afterwards and its hash changes, the lock no longer matches, and the probe is VOID. Not failed — void, meaning it provides no evidence at all.</p>
+<p>Why bother? Because of a very human failure. You write a tolerance of 1e-9, you run the probe, you get 3e-9, and every engineering instinct says <em>that's basically fine, float arithmetic, loosen it to 1e-8</em>. Sometimes that judgment is right. The problem is that you cannot tell, from inside the moment, whether you are exercising expertise or rationalizing a failure — and if the bar can move after you see the measurement, the bar has stopped carrying information.</p>
+<p>This is the logic of pre-registration in clinical trials. A trial that declares its primary endpoint before enrolling patients makes a falsifiable prediction; a trial that picks its endpoint after unblinding will find <em>something</em> significant, because with enough outcomes measured, something always is. The gate lock is that commitment in miniature, and the same one <a href="10-designing-a-clean-experiment.html">Chapter 10</a> described for the extrapolation predictions.</p>
+<aside class="callout callout-matters"><span class="callout-label">Why this matters</span><div class="callout-body"><p>the lock does not make the researcher more honest. It makes a specific kind of dishonesty impossible to perform accidentally, which is the kind that actually happens.</p></div></aside>
+<h2 id="four-probes-up-close">Four probes up close<a class="anchor" href="#four-probes-up-close" aria-label="Link to this section">#</a></h2>
+<p><strong><code>quant_numerics</code></strong> checks the quantizers, the mathematical heart of the project. Its reference is a hand-built NumPy reimplementation written from the equations in the BitNet b1.58 and ParetoQ papers, importing nothing from the LOGOS quantizer modules, then compared element by element. Its gates require ternary levels to be exactly {−gamma, 0, +gamma} with gamma equal to the mean absolute weight; require 2/3/4-bit reconstructions to match the NumPy per-group reference, with no more than 2^k distinct levels in any group; and require reconstruction error to fall monotonically from 2 to 3 to 4 bits on identical master weights. Round-1 agreement was about 4e-9, which is floating-point rounding and nothing else.</p>
+<p><strong><code>bpb_definition</code></strong> is the cleanest illustration of the closed-form idea. Take a model forced to output a uniform distribution — literally a module returning constant zero logits. Its loss is not a matter of opinion. Every token costs exactly log2(V) bits, so bits-per-byte must be tokens × log2(vocab) ÷ bytes, with no model, no training, no approximation. If the runner disagrees, the runner is wrong. Round 1 matched to 6e-13. A second gate compares the runner against an independently written per-token loop, on a case deliberately chosen so the final window is partial. A third requires every token but the first to be scored exactly once.</p>
+<p><strong><code>fit_recovery</code></strong> verifies machinery whose correct answer is normally unknowable, by manufacturing a situation where it is known. The probe hand-codes one candidate law form inside itself, draws hidden truth parameters, generates a noisy grid over sizes and token budgets, and hands only the grid to the fitter. Does it recover the hidden exponents and per-precision capacity factors within stated tolerances (round 1: exponents within 13%, capacity factors within 3%)? Does leave-one-size-out selection pick the form that actually generated the data? Do prescriptions from the fitted law agree with those from the true law across the memory-and-tokens grid (round 1: 100% of cells)? A fitter that cannot pass on data it is guaranteed to be able to explain has no business being pointed at real data.</p>
+<p><strong><code>data_order</code></strong> enforces the rule from <a href="10-designing-a-clean-experiment.html">Chapter 10</a> that every arm sees identical tokens. It hashes each batch tensor with sha256 and compares fifty-batch streams from two independently constructed loaders. It builds loaders exactly the way the trainer does for two run specifications differing only in precision, and requires twenty batches of identical hashes. It checks that starting from step k matches running from zero and discarding k batches, including values of k that cross an epoch boundary. And it re-derives from the raw shard bytes, rather than the loader's bookkeeping, that one epoch consumes every window exactly once.</p>
+<h2 id="six-defects-six-lessons">Six defects, six lessons<a class="anchor" href="#six-defects-six-lessons" aria-label="Link to this section">#</a></h2>
+<p>None of the six would have announced itself.</p>
+<p><strong>One: the CUDA resume crash.</strong> Loading a checkpoint with <code>map_location=&quot;cuda&quot;</code> moved the random-number-generator state onto the GPU, where PyTorch refuses it. The CPU-only unit test could not see it because on CPU the move was a no-op (<a href="11-building-the-machine.html">Chapter 11</a> tells the full story). <em>Lesson: a test that cannot reach the failing configuration is not evidence about that configuration.</em></p>
+<p><strong>Two: status clobbering.</strong> Re-invoking an already-completed run rewrote its status file with a final loss of NaN. Since the queue runner and the ops agents read that file to decide what is done, a stray re-invocation could have marked a good run as garbage. Completed runs are now immutable no-ops. <em>Lesson: idempotence is a correctness property, not a convenience.</em></p>
+<p><strong>Three: a schema mismatch.</strong> The evaluation reader did not accept the index schema the data pipeline actually writes — two components of one project, each internally consistent, disagreeing at the seam. It would have raised on the first real evaluation, after the training hours were spent. <em>Lesson: test at the interfaces with real artifacts, not with fixtures both sides agree on.</em></p>
+<p><strong>Four: a non-scientific field leaking into the config hash.</strong> The <code>phase</code> field was in the hashed set, so a run reused across two phases — a documented, intentional reuse — hashed to two identities, silently breaking the link between results and manifests for fifteen grid runs. The <code>manifest_integrity</code> probe caught it as a REJECT and <code>phase</code> was removed. <em>Lesson: provenance breaks quietly. It has to be checked, not assumed.</em></p>
+<p><strong>Five: the parity criterion itself was wrong.</strong> The most interesting of the six, because the bug was in a check rather than in the thing checked. Exporting a model and reloading it should give back the same model, and the obvious test is the largest absolute difference between the two versions' output logits. That criterion is invalid for deep quantized models. On reload the ternary scale is recomputed as an fp32 mean, which can differ from the training-time value by one <strong>ulp</strong> — the smallest representable step at that magnitude. The discontinuous int8 activation quantization then amplifies that seed through depth, because a value sitting exactly on a rounding boundary can flip to the neighbouring integer. Measured: about 5e-6 after the first block, growing to roughly 0.15 by the sixth, while the output <em>distributions</em> stayed equivalent at a Kullback-Leibler divergence near 3e-4. A max-absolute-difference gate would have failed a perfectly correct export. The gate became bitwise comparison of packed codes and scales, with a divergence bound as secondary. <em>Lesson: an unfit metric produces false alarms, and false alarms train people to ignore alarms.</em></p>
+<p><strong>Six: a one-ulp mismatch between forward and export.</strong> The integer-quantization export divided by a scale that could differ from the forward path's gradient-rescaled fp32 value by a single ulp, so a master weight sitting exactly on a boundary could export a different code than training had used. Nothing would have crashed; the deployed model would simply have differed from the trained one in a few weights. Export now replicates the forward arithmetic exactly. <em>Lesson: &quot;the same formula&quot; and &quot;the same floating-point operations in the same order&quot; are different claims.</em></p>
+<h2 id="the-follow-up-tolerances-do-not-transfer">The follow-up: tolerances do not transfer<a class="anchor" href="#the-follow-up-tolerances-do-not-transfer" aria-label="Link to this section">#</a></h2>
+<p>The corrected parity gate then needed correcting again. The divergence bound had been calibrated on freshly initialized shallow models, which reload comfortably under 1e-3. Then the most-trained model in the grid — 6M parameters at 320 tokens per parameter, with the sharpest output distributions in the project — reloaded at 1.9e-3, over the bound, with <strong>all fifty-six quantized layers bitwise identical</strong>. The weights were provably correct. The bound was wrong.</p>
+<p>The mechanism is that amplification grows with training. A well-trained model's activations sit closer to quantization boundaries and its output distribution is peakier, so the same ulp-level perturbation propagates further. The bound now sits at 5e-3 with the calibration evidence written into the source beside it, and real reconstruction errors land orders of magnitude above that, so the gate still bites.</p>
+<aside class="callout callout-aside"><span class="callout-label">Worth knowing</span><div class="callout-body"><p>a tolerance measured on a toy model is a statement about toy models. Every numerical threshold in a research codebase carries an unstated &quot;under the conditions where I measured it&quot;, and those conditions change as the project gets better at its job.</p></div></aside>
+<p>This recalibration is legitimate precisely because it did not weaken a gate to let a claim through. It corrected a bound after establishing, by an independent route — bitwise identity of every packed layer — that the artifact was correct and the threshold miscalibrated.</p>
+<h2 id="a-second-kind-of-review-the-direction-not-the-code">A second kind of review: the direction, not the code<a class="anchor" href="#a-second-kind-of-review-the-direction-not-the-code" aria-label="Link to this section">#</a></h2>
+<p>The panel checks whether the implementation matches the intention. It cannot tell you whether the intention is a good scientific plan. For that, LOGOS commissioned a separate review: an AI reviewer panel, kimi3, playing five roles — scaling-laws methodologist, quantization systems lead, statistics reviewer, program chair, devil's advocate — reading the science-bearing code, the plans, the research notes, the raw results file, and the surrounding literature. The verdict was <strong>7.5 out of 10, accept with revisions</strong>, with four cheap fixes flagged before they became load-bearing.</p>
+<table>
+<thead>
+<tr>
+  <th>Finding</th>
+  <th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>F1 — the learning-rate confound: &quot;ternary beats bf16 undertrained&quot; was indistinguishable from &quot;higher LR wins undertrained&quot;</td>
+  <td><strong>Fixed.</strong> Twelve control runs crossing precision against learning rate landed (<a href="10-designing-a-clean-experiment.html">Chapter 10</a>)</td>
+</tr>
+<tr>
+  <td>F2 — data shortfall: 2.5B tokens on disk against later phases needing ~10B</td>
+  <td><strong>Fixed.</strong> The corpus was extended to 11.37B tokens before the deeper runs started</td>
+</tr>
+<tr>
+  <td>F3 — embedding bytes undermine the headline: the 32k embedding can exceed the body budget at deployment scale</td>
+  <td><strong>Scheduled</strong> before the capstone phase: total bytes beside body bytes, plus a fixed disclosed embedding treatment</td>
+</tr>
+<tr>
+  <td>F4 — the prescription ignores training compute, which a referee will not</td>
+  <td><strong>Fixed.</strong> Iso-training-FLOPs contours added to the phase diagram; zero extra runs required</td>
+</tr>
+</tbody>
+</table>
+<p>A fifth item — the fitting objective weighting every cell equally despite seed noise varying about fourfold across cells — was implemented as inverse-variance weighting. Two further findings remain open by choice and are documented rather than quietly dropped: a control arm separating weight quantization from activation quantization, and the shape-robustness question about the very wide, very shallow models at the bottom of the ladder.</p>
+<p>The review's most valuable output was not any single fix. It was the observation that the largest risk to the project was not conceptual. The question was sound and the early data supported the thesis; the threats were four specific, cheap, findable holes. That is usually where research risk actually lives.</p>
+<h2 id="the-rule-that-makes-it-mean-something">The rule that makes it mean something<a class="anchor" href="#the-rule-that-makes-it-mean-something" aria-label="Link to this section">#</a></h2>
+<p>An apparatus like this only works if it has authority, and the authority comes from one rule. The panel's verdict gates publication of results from the repository: <code>logos-validate --all</code> must return ACCEPT before any result is cited. When a gate fails there are exactly two permitted responses — fix the stack, or retract the claim. Weakening the gate is not on the list, because a gate changed after registration does not become more lenient, it becomes no gate at all.</p>
+<p>That is a costly commitment, and it is meant to be. A verification layer you can negotiate with is a verification layer that tells you what you wanted to hear, on exactly the days when it matters most that it does not.</p>
+<h2 id="what-to-remember">What to remember<a class="anchor" href="#what-to-remember" aria-label="Link to this section">#</a></h2>
+<p>Unit tests check code against its author's intention, which leaves research code exposed to its worst failure mode: a wrong intention faithfully implemented, producing numbers that look entirely reasonable. LOGOS answers with eleven probes and forty-nine kill gates that re-derive every load-bearing quantity independently — NumPy reimplementations from the source papers, hand-derived gradients, a separately written bit-stream decoder, closed-form cases with known answers, and synthetic data generated from parameters the fitter never sees — each probe's criteria sha256-locked before any result is examined, exactly as a clinical trial registers its endpoint before unblinding. Round 1 caught six real defects, including two where the <em>check itself</em> was wrong rather than the code, and a follow-up showed that a tolerance measured on fresh toy models does not transfer to a well-trained one. An external review of the research direction scored the project 7.5 out of 10 and named four cheap holes, three of which are now closed. What holds the structure up is the rule that a failing gate is met by fixing the stack or retracting the claim, never by moving the gate.</p>
+
+    </article>
+    <nav class="pager">
+      <a class="pager-prev" href="11-building-the-machine.html"><span>Previous</span>11 · Building the machine</a>
+      <a class="pager-next" href="13-what-we-found.html"><span>Next</span>13 · What we found so far</a>
+    </nav>
+    <footer class="foot">
+      <p>Memory-optimal scaling laws for natively low-bit language models · <a href="https://github.com/canivel/logos">source and data on GitHub</a> · Apache-2.0</p>
+    </footer>
+  </main>
+</div>
+<script>
+(function () {
+  var root = document.documentElement;
+  var saved = localStorage.getItem('logos-theme');
+  if (saved) root.setAttribute('data-theme', saved);
+  function currentIsDark() {
+    var attr = root.getAttribute('data-theme');
+    if (attr) return attr === 'dark';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+  function syncFigures() {
+    var explicit = root.getAttribute('data-theme');
+    var dark = currentIsDark();
+    // A <source media="(prefers-color-scheme: dark)"> outranks the <img src>,
+    // so an explicit choice has to retarget the source too, not just the img.
+    document.querySelectorAll('figure.fig source.dark-src').forEach(function (s) {
+      s.media = explicit ? (dark ? 'all' : 'not all') : '(prefers-color-scheme: dark)';
+    });
+    document.querySelectorAll('figure.fig img').forEach(function (img) {
+      var want = dark ? img.dataset.dark : img.dataset.light;
+      if (want && img.getAttribute('src') !== want) img.setAttribute('src', want);
+    });
+  }
+  var btn = document.querySelector('.theme-toggle');
+  if (btn) btn.addEventListener('click', function () {
+    var next = currentIsDark() ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    localStorage.setItem('logos-theme', next);
+    syncFigures();
+  });
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', syncFigures);
+  syncFigures();
+  var navBtn = document.querySelector('.nav-toggle');
+  if (navBtn) navBtn.addEventListener('click', function () {
+    document.querySelector('.sidebar').classList.toggle('open');
+  });
+})();
+</script>
+</body>
+</html>

@@ -67,6 +67,14 @@ is itself part of the point: the same byte-scarcity that motivates the
 research also rations who gets to do research, and memory-optimal training
 is one of the few ways around both.
 
+> ### 📖 [**Read the book →**](https://canivel.github.io/logos/)
+> *A memory budget, and the model that fits it* — a 15-chapter explainer that
+> builds the whole project from first principles, for anyone with basic
+> deep-learning knowledge. Teaches tokens, scaling laws, quantization, and
+> straight-through gradients before using them, then walks through the
+> experimental design, the machinery, the verification layer, and every
+> result measured so far. Source in [`book/`](book/).
+
 - 📋 Research plan: [v0.3 — LOGOS-Local](research/logos-research-plan-v0.3-local.md) (active) · [v0.2 — full-scale program](research/logos-research-plan-v0.2.md) (reference design)
 - 🧪 Research notes: [0 — micro-scale replication](docs/research-note-0-micro-p0.md) · [1 — the L0 crossover](docs/research-note-1-l0.md) · [2 — L1 protocol freeze](docs/research-note-2-l1-protocol.md) (in progress)
 - 🔍 External review: [kimi3 round 1](docs/kimi3-research-review-round-1.md)
@@ -78,7 +86,7 @@ is one of the few ways around both.
 ## First result (micro-P0, replication tier)
 
 Full precision ladder trained end-to-end on real text at micro scale
-(~4.7M non-embedding params, byte-level, RTX 3080):
+(4.82M non-embedding params, byte-level, RTX 3080):
 
 ![micro-P0 loss curves](docs/figures/local_p0_loss_curves.png)
 
@@ -108,9 +116,12 @@ store. Details and caveats: [Research Note 0](docs/research-note-0-micro-p0.md).
 | L4 | When does the KV cache dominate the byte budget? | local, mostly eval | $0 |
 | L5 | Does the law's prescribed model beat same-footprint baselines? (**trit-lite**) | RTX 5090 | $0 |
 
-~830 local GPU-hours total. Everything is manifest-driven: all ~145 runs are
-pre-specified in [`manifests/`](manifests/) with per-run cost estimates, and
-nothing launches by hand twice.
+**125 local runs (~884 GPU-hours) + 5 cloud anchors ($92)**, every one of them
+pre-specified in [`manifests/`](manifests/) with per-run cost estimates —
+see the generated [`summary_local.md`](manifests/summary_local.md). Nothing
+launches by hand twice. (The count grew past the plan's original estimate
+when the LR-confound controls and the probe-grid extension were added; both
+additions are documented in the research notes.)
 
 ## How the claims stay honest
 

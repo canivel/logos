@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en" data-theme-pref="system">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chapter 2 — What a Language Model Is — LOGOS</title>
+<meta name="description" content="This chapter builds the whole object from scratch: how text becomes numbers, what the model is actually asked to do, what its adjustable parts are, how those parts are arranged int">
+<meta property="og:title" content="Chapter 2 — What a Language Model Is — LOGOS">
+<meta property="og:description" content="This chapter builds the whole object from scratch: how text becomes numbers, what the model is actually asked to do, what its adjustable parts are, how those parts are arranged int">
+<meta property="og:type" content="article">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>▚</text></svg>">
+<link rel="stylesheet" href="assets/book.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="topbar">
+  <a class="brand" href="index.html"><span class="brand-mark">▚</span> LOGOS</a>
+  <div class="topbar-right">
+    <a class="topbar-link" href="https://github.com/canivel/logos">Repository</a>
+    <button class="theme-toggle" type="button" aria-label="Switch colour theme">◐</button>
+    <button class="nav-toggle" type="button" aria-label="Open chapter list">☰</button>
+  </div>
+</header>
+<div class="shell">
+  <nav class="sidebar" aria-label="Chapters">
+    
+      
+      <ul class="nav-list">
+      
+        <li><a href="index.html" >Start here</a></li>
+      
+      </ul>
+    
+      <div class="nav-part">Part I — Why this exists</div>
+      <ul class="nav-list">
+      
+        <li><a href="01-the-memory-wall.html" >1 · The memory wall</a></li>
+      
+        <li><a href="02-what-a-language-model-is.html" class="current" aria-current="page">2 · What a language model is</a></li>
+      
+        <li><a href="03-measuring-quality.html" >3 · Measuring quality</a></li>
+      
+      </ul>
+    
+      <div class="nav-part">Part II — The toolkit</div>
+      <ul class="nav-list">
+      
+        <li><a href="04-scaling-laws.html" >4 · Scaling laws</a></li>
+      
+        <li><a href="05-numbers-in-a-computer.html" >5 · Numbers in a computer</a></li>
+      
+        <li><a href="06-quantization.html" >6 · Quantization</a></li>
+      
+        <li><a href="07-training-in-low-precision.html" >7 · Training in low precision</a></li>
+      
+        <li><a href="08-the-kv-cache.html" >8 · The KV cache</a></li>
+      
+      </ul>
+    
+      <div class="nav-part">Part III — The research</div>
+      <ul class="nav-list">
+      
+        <li><a href="09-the-question.html" >9 · The question</a></li>
+      
+        <li><a href="10-designing-a-clean-experiment.html" >10 · Designing a clean experiment</a></li>
+      
+        <li><a href="11-building-the-machine.html" >11 · Building the machine</a></li>
+      
+        <li><a href="12-trusting-the-numbers.html" >12 · Trusting the numbers</a></li>
+      
+      </ul>
+    
+      <div class="nav-part">Part IV — Results & what's next</div>
+      <ul class="nav-list">
+      
+        <li><a href="13-what-we-found.html" >13 · What we found so far</a></li>
+      
+        <li><a href="14-fitting-the-law.html" >14 · Fitting the law</a></li>
+      
+        <li><a href="15-the-road-ahead.html" >15 · The road ahead</a></li>
+      
+      </ul>
+    
+      <div class="nav-part">Reference</div>
+      <ul class="nav-list">
+      
+        <li><a href="glossary.html" >Glossary</a></li>
+      
+      </ul>
+    
+  </nav>
+  <main id="main">
+    
+    <details class="toc">
+      <summary>On this page</summary>
+      <ul><li class="toc-l2"><a href="#from-text-to-numbers-tokens">From text to numbers: tokens</a></li><li class="toc-l2"><a href="#the-whole-task-predict-the-next-token">The whole task: predict the next token</a></li><li class="toc-l2"><a href="#parameters-the-numbers-that-get-adjusted">Parameters: the numbers that get adjusted</a></li><li class="toc-l2"><a href="#the-architecture-a-transformer-decoder">The architecture: a transformer decoder</a></li><li class="toc-l3"><a href="#the-entry-the-embedding-table">The entry: the embedding table</a></li><li class="toc-l3"><a href="#the-body-attention">The body: attention</a></li><li class="toc-l3"><a href="#the-body-feed-forward">The body: feed-forward</a></li><li class="toc-l3"><a href="#the-plumbing-and-the-exit">The plumbing and the exit</a></li><li class="toc-l2"><a href="#training-forward-loss-backward-step">Training: forward, loss, backward, step</a></li><li class="toc-l2"><a href="#n-and-d-the-two-numbers-that-define-scale">N and D: the two numbers that define scale</a></li><li class="toc-l3"><a href="#why-logos-counts-non-embedding-parameters">Why LOGOS counts non-embedding parameters</a></li><li class="toc-l2"><a href="#tokens-per-parameter-the-quot-how-much-training-quot-axis">Tokens per parameter: the &quot;how much training&quot; axis</a></li><li class="toc-l2"><a href="#the-ladder-logos-actually-trains">The ladder LOGOS actually trains</a></li><li class="toc-l2"><a href="#what-to-remember">What to remember</a></li></ul>
+    </details>
+    
+    <article class="prose">
+      <h1 id="chapter-2-what-a-language-model-is">Chapter 2 — What a Language Model Is<a class="anchor" href="#chapter-2-what-a-language-model-is" aria-label="Link to this section">#</a></h1>
+<p><em>This chapter builds the whole object from scratch: how text becomes numbers, what the model is actually asked to do, what its adjustable parts are, how those parts are arranged into a transformer, and how training changes them. By the end you will be able to read a sentence like &quot;3M non-embedding parameters at 320 tokens per parameter&quot; and know exactly what every word in it means, including why this project counts parameters the unusual way it does.</em></p>
+<h2 id="from-text-to-numbers-tokens">From text to numbers: tokens<a class="anchor" href="#from-text-to-numbers-tokens" aria-label="Link to this section">#</a></h2>
+<p>A neural network cannot read letters. It manipulates numbers, so the first job is converting text into numbers, and the conversion has to be reversible so the model's output can be turned back into text.</p>
+<p>The scheme every modern language model uses is <strong>tokenization</strong>: splitting text into a fixed inventory of chunks called <strong>tokens</strong>, each of which has an integer ID. The inventory is the <strong>vocabulary</strong>. Chunks are not words and not letters; they are frequent pieces of text, so common words get a token to themselves while rarer words get built out of parts. Here is a real example from the exact tokenizer this project uses, where <code>_</code> marks a leading space:</p>
+<table>
+<thead>
+<tr>
+  <th>Text</th>
+  <th><code>The mitochondria is the powerhouse of the cell.</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Tokens</td>
+  <td><code>_The</code> <code>_mit</code> <code>och</code> <code>ond</code> <code>ria</code> <code>_is</code> <code>_the</code> <code>_power</code> <code>house</code> <code>_of</code> <code>_the</code> <code>_cell</code> <code>.</code></td>
+</tr>
+<tr>
+  <td>IDs</td>
+  <td>450, 1380, 2878, 898, 2849, 338, 278, 3081, 8697, 310, 278, 3038, 29889</td>
+</tr>
+</tbody>
+</table>
+<p>Forty-seven bytes of English became thirteen integers. Notice the pattern: <code>_The</code>, <code>_is</code>, <code>_the</code>, <code>_of</code> are single tokens because they are everywhere in English, while &quot;mitochondria&quot; costs four because it is not. Notice also that <code>_the</code> appears twice with the identical ID 278. Tokens are a lookup table, not a computation.</p>
+<p>LOGOS uses TinyLlama's tokenizer, which has 32,000 entries, and pads the model's table to <strong>32,768</strong> because powers of two are efficient on GPUs (the top 768 rows are simply never used). This choice is frozen for the entire project. Training a custom tokenizer would be a second variable moving alongside precision, and the whole method depends on moving one variable at a time.</p>
+<aside class="callout callout-plain"><span class="callout-label">In plain terms</span><div class="callout-body"><p>a tokenizer is a fixed dictionary agreed on in advance. Text goes in, a list of integers between 0 and 32,767 comes out, and the same list converts back to exactly the same text.</p></div></aside>
+<h2 id="the-whole-task-predict-the-next-token">The whole task: predict the next token<a class="anchor" href="#the-whole-task-predict-the-next-token" aria-label="Link to this section">#</a></h2>
+<p>Here is the part that surprises people: predicting the next token is not one of the things a language model does. It is the only thing it does.</p>
+<p>Given a sequence of tokens so far, the model outputs a <strong>probability distribution</strong> over the vocabulary: 32,768 numbers, all non-negative, summing to 1, one per possible next token. Feed it <code>_The _mit och ond</code> and a well-trained model might put substantial probability on <code>ria</code> and very little on <code>.</code> or <code>_banana</code>. That is the entire output. Everything else, from chat to summarization to code, is this one operation applied repeatedly, each predicted token appended to the sequence and fed back in.</p>
+<p>The reason this narrow task produces broad ability is that predicting text well requires modeling whatever the text is about. To finish &quot;the capital of France is&quot; you need the fact. To finish a line of code you need the syntax and the variable names in scope. The training signal is cheap and unlimited because every piece of text in the world is already labeled: the label for each position is the token that actually came next.</p>
+<h2 id="parameters-the-numbers-that-get-adjusted">Parameters: the numbers that get adjusted<a class="anchor" href="#parameters-the-numbers-that-get-adjusted" aria-label="Link to this section">#</a></h2>
+<p>A model is defined by two things: a fixed <em>structure</em> (what operations happen in what order) and a large collection of adjustable numbers threaded through that structure. Those numbers are the <strong>parameters</strong>, also called <strong>weights</strong>. They start random and are gradually adjusted so the model's predictions match real text. When people say a model &quot;has 7 billion parameters,&quot; they are counting these numbers.</p>
+<p>Nearly all of them live in <strong>linear layers</strong>, also called matrix multiplications. A linear layer takes a list of numbers in and produces a different list out, where each output is a weighted sum of all the inputs. If the input is 256 numbers and the output is 256 numbers, the layer needs 256 × 256 = 65,536 weights, one for every input-output pair, describing how much each input contributes to each output. That is all a matrix is here: a table of &quot;how much does this feed into that.&quot; Stack many such layers with simple nonlinear functions between them and you can represent very complicated relationships.</p>
+<aside class="callout callout-aside"><span class="callout-label">Worth knowing</span><div class="callout-body"><p>the parameter <em>count</em> is what determines how much a model can know, but the <em>precision</em> of each parameter, meaning how many bits are used to store each number, determines how many bytes the count translates to. This project's entire subject is the trade between those two. <a href="05-numbers-in-a-computer.html">Chapter 5</a> covers precision in detail.</p></div></aside>
+<h2 id="the-architecture-a-transformer-decoder">The architecture: a transformer decoder<a class="anchor" href="#the-architecture-a-transformer-decoder" aria-label="Link to this section">#</a></h2>
+<p>The arrangement LOGOS uses is the <strong>transformer decoder</strong>, the same family as GPT and Llama. It has three parts: an entry point that turns token IDs into vectors, a stack of identical processing blocks, and an exit point that turns the final vector back into probabilities.</p>
+<figure class="fig"><picture><source srcset="figures/transformer-anatomy-dark.png" media="(prefers-color-scheme: dark)" class="dark-src"><img src="figures/transformer-anatomy.png" alt="Anatomy of a transformer decoder block, showing where parameters live: the embedding table at the entry, and the repeated attention and feed-forward layers that make up the body" loading="lazy" data-light="figures/transformer-anatomy.png" data-dark="figures/transformer-anatomy-dark.png"></picture><figcaption>Anatomy of a transformer decoder block, showing where parameters live: the embedding table at the entry, and the repeated attention and feed-forward layers that make up the body</figcaption></figure>
+<h3 id="the-entry-the-embedding-table">The entry: the embedding table<a class="anchor" href="#the-entry-the-embedding-table" aria-label="Link to this section">#</a></h3>
+<p>The <strong>embedding table</strong> is a lookup table with one row per vocabulary entry. Each row is a list of numbers, and the length of that list is the model's <strong>width</strong>, written <code>d_model</code>. Token ID 278 fetches row 278. That row is the model's learned representation of <code>_the</code>, and its values are parameters like any others: they get adjusted during training.</p>
+<p>The table's size is vocabulary × width. For a model with <code>d_model</code> = 256, that is 32,768 × 256 = 8,388,608 parameters, sitting in the model before a single block has run. Hold onto that number; it becomes important shortly.</p>
+<h3 id="the-body-attention">The body: attention<a class="anchor" href="#the-body-attention" aria-label="Link to this section">#</a></h3>
+<p>Each block has two halves. The first is <strong>attention</strong>, and the concept is simpler than its reputation. At every position in the sequence, the model asks: which earlier positions are relevant to me right now? It computes a relevance score against each previous position, converts those scores into weights that sum to 1, and takes a weighted average of what those positions hold. The result is mixed back into the current position.</p>
+<p>That is the whole idea. If the current position is finishing a pronoun, attention lets it pull in the noun from twelve tokens back. If it is closing a bracket, it can pull in the bracket that opened. Positions can only look backwards, never forwards, which is what makes this a <em>decoder</em>: predicting the next token would be trivial if you could peek at it. Attention is also the only place where information moves <em>between</em> positions; every other operation treats each position independently.</p>
+<h3 id="the-body-feed-forward">The body: feed-forward<a class="anchor" href="#the-body-feed-forward" aria-label="Link to this section">#</a></h3>
+<p>The second half of each block is the <strong>feed-forward network</strong>, and its job is per-position processing. It takes the vector at each position, expands it into a wider intermediate representation, applies a nonlinear function, and projects it back down. No information crosses between positions here. If attention is &quot;gather what is relevant from the past,&quot; feed-forward is &quot;now think about what you gathered.&quot; It typically holds more parameters than attention does.</p>
+<h3 id="the-plumbing-and-the-exit">The plumbing and the exit<a class="anchor" href="#the-plumbing-and-the-exit" aria-label="Link to this section">#</a></h3>
+<p>Each half is preceded by a <strong>normalization</strong> step that rescales the vector to a consistent size, which keeps the numbers flowing through a deep stack from exploding or vanishing. LOGOS uses RMSNorm, a lightweight variant. Position information enters through RoPE (rotary position embeddings), which encodes <em>where</em> a token sits by rotating its representation. Attention uses <strong>grouped-query attention</strong> at a 4:1 ratio, meaning four attention heads share one set of keys and values, which shrinks the KV cache from <a href="01-the-memory-wall.html">Chapter 1</a> by a factor of four. The feed-forward uses SwiGLU, a gated nonlinearity.</p>
+<p>At the exit, an <strong>output head</strong> maps the final vector back to 32,768 numbers, one per vocabulary entry, which are converted into probabilities. In LOGOS the output head does not have its own parameters: it reuses the embedding table, a standard trick called <strong>tied embeddings</strong>. The same table that turns IDs into vectors turns vectors back into scores.</p>
+<h2 id="training-forward-loss-backward-step">Training: forward, loss, backward, step<a class="anchor" href="#training-forward-loss-backward-step" aria-label="Link to this section">#</a></h2>
+<p>Training is a loop with four stages, repeated hundreds of thousands of times.</p>
+<p>The <strong>forward pass</strong> runs a chunk of text through the network and produces predicted distributions at every position. The <strong>loss</strong> compares those predictions to what actually came next and produces a single number measuring how wrong the model was; <a href="03-measuring-quality.html">Chapter 3</a> is devoted entirely to this. <strong>Backpropagation</strong> then computes, for every parameter, how the loss would change if that parameter were nudged up or down. Finally the <strong>optimizer step</strong> nudges every parameter a little in the direction that reduces loss. The size of the nudge is set by the <strong>learning rate</strong>.</p>
+<p>One pass through this loop is a <strong>step</strong>. The chunk of text used in one step is a <strong>batch</strong>. LOGOS fixes the batch at 2^18 = 262,144 tokens, arranged as sequences of 1,024 tokens each, on every run in the project including the cloud validation runs, so no comparison is ever contaminated by a difference in batch size.</p>
+<p>Training therefore consumes a stream of tokens, and the total consumed is the second number that defines a run. A model trained on 2 billion tokens with a batch of 262,144 takes roughly 7,600 steps. The data order is frozen project-wide by a fixed seed, so two runs differing only in precision see literally the same text in the same order.</p>
+<h2 id="n-and-d-the-two-numbers-that-define-scale">N and D: the two numbers that define scale<a class="anchor" href="#n-and-d-the-two-numbers-that-define-scale" aria-label="Link to this section">#</a></h2>
+<p>Almost everything in scaling-law research reduces to two quantities. <strong>N</strong> is the parameter count. <strong>D</strong> is the number of training tokens consumed. Quality is largely a function of these two, which is why a law of the form <code>L = E + A/N^α + B/D^β</code> can be fitted at all: loss falls as a power of N and as a power of D, toward an irreducible floor E.</p>
+<h3 id="why-logos-counts-non-embedding-parameters">Why LOGOS counts non-embedding parameters<a class="anchor" href="#why-logos-counts-non-embedding-parameters" aria-label="Link to this section">#</a></h3>
+<p>Here is where this project makes a choice you need to understand to read any of its results.</p>
+<p>The embedding table's size depends on the vocabulary, fixed at 32,768, and not on how deep or capable the model is. At the scale of a 7-billion-parameter model, an embedding table is a rounding error. At the scale LOGOS works, it dominates. Compare the ladder's smallest sizes:</p>
+<table>
+<thead>
+<tr>
+  <th>Size</th>
+  <th style="text-align:right">Width</th>
+  <th style="text-align:right">Layers</th>
+  <th style="text-align:right">Non-embedding N</th>
+  <th style="text-align:right">Embedding params</th>
+  <th style="text-align:right">Total</th>
+  <th style="text-align:right">Embedding share</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>3m</td>
+  <td style="text-align:right">256</td>
+  <td style="text-align:right">4</td>
+  <td style="text-align:right">3,211,264</td>
+  <td style="text-align:right">8,388,608</td>
+  <td style="text-align:right">11,599,872</td>
+  <td style="text-align:right">72%</td>
+</tr>
+<tr>
+  <td>6m</td>
+  <td style="text-align:right">256</td>
+  <td style="text-align:right">8</td>
+  <td style="text-align:right">6,422,528</td>
+  <td style="text-align:right">8,388,608</td>
+  <td style="text-align:right">14,811,136</td>
+  <td style="text-align:right">57%</td>
+</tr>
+<tr>
+  <td>12m</td>
+  <td style="text-align:right">384</td>
+  <td style="text-align:right">7</td>
+  <td style="text-align:right">12,386,304</td>
+  <td style="text-align:right">12,582,912</td>
+  <td style="text-align:right">24,969,216</td>
+  <td style="text-align:right">50%</td>
+</tr>
+<tr>
+  <td>25m</td>
+  <td style="text-align:right">512</td>
+  <td style="text-align:right">8</td>
+  <td style="text-align:right">24,903,680</td>
+  <td style="text-align:right">16,777,216</td>
+  <td style="text-align:right">41,680,896</td>
+  <td style="text-align:right">40%</td>
+</tr>
+<tr>
+  <td>60m</td>
+  <td style="text-align:right">640</td>
+  <td style="text-align:right">12</td>
+  <td style="text-align:right">59,473,920</td>
+  <td style="text-align:right">20,971,520</td>
+  <td style="text-align:right">80,445,440</td>
+  <td style="text-align:right">26%</td>
+</tr>
+</tbody>
+</table>
+<p>The &quot;6m&quot; model has 6,422,528 parameters in its body and 8,388,608 in its embedding table. The lookup table is <em>larger than the model</em>. If you fitted a scaling law on total parameters, you would mostly be fitting a law about a lookup table whose size never changes with capability, and the fit would be garbage.</p>
+<p>So LOGOS fits its laws on <strong>non-embedding N</strong>: the parameters in the blocks, the ones that actually do the computing. Both counts are reported everywhere, because the byte story cuts the other way. A packed ternary 25m artifact is 6.2 MB of body and 33.6 MB of embeddings, so <strong>84% of its bytes are embedding</strong>. When the project talks about memory budgets it talks about <em>body</em>-byte budgets, and says so every time. This is the honest cost of working at small scale, and it is stated as a standing limitation rather than buried.</p>
+<aside class="callout callout-matters"><span class="callout-label">Why this matters</span><div class="callout-body"><p>if you ever see a footprint claim from this project, check whether it is a body number or a total. The 6m ternary artifact packs to 18.4 MB total against 29.5 MB for the bf16 version. The body shrank by 8× and the total by only 1.6×, because the embedding table is identical in both.</p></div></aside>
+<h2 id="tokens-per-parameter-the-quot-how-much-training-quot-axis">Tokens per parameter: the &quot;how much training&quot; axis<a class="anchor" href="#tokens-per-parameter-the-quot-how-much-training-quot-axis" aria-label="Link to this section">#</a></h2>
+<p>The single most useful derived quantity in this project is <strong>D/N</strong>, tokens per parameter: how many training tokens each parameter got to learn from.</p>
+<p>Chinchilla's 2022 finding was that, for a fixed compute budget, the best split puts roughly 20 tokens per parameter. That is the <em>compute</em>-optimal point, and it is the wrong target for anything you intend to deploy. You train a model once and serve it to millions of users forever, so the training cost amortizes to nothing per user while the serving cost, which depends on model size, is paid every single time. Given that asymmetry, the rational move is to train a <em>smaller</em> model for <em>much</em> longer than Chinchilla-optimal: spend more up front to get a permanently cheaper artifact. Every deployed model in the industry therefore sits far to the right of optimal.</p>
+<p>LOGOS spans that axis deliberately, at 20×, 80×, and 320× tokens per parameter. At 3M non-embedding parameters, 20× is about 64 million training tokens and 320× is about 1.03 billion. The axis matters because the literature suggests low-bit models look best when undertrained and worst when heavily overtrained, and the project's L0 results confirm exactly that. This is where the low-bit trade-off flips, so any law that ignores it is answering the wrong question.</p>
+<h2 id="the-ladder-logos-actually-trains">The ladder LOGOS actually trains<a class="anchor" href="#the-ladder-logos-actually-trains" aria-label="Link to this section">#</a></h2>
+<p>The models in the table above are the whole local program: 3M, 6M, 12M, 25M, and 60M non-embedding parameters, all trained on a single desktop GPU. A 125M model (127,401,984 non-embedding parameters) serves as the cloud validation anchor, and it had not been trained at the time of writing. Every rung is architecturally identical apart from width and depth: Llama-style decoder, RMSNorm, RoPE, grouped-query attention at 4:1, SwiGLU feed-forward, tied 32,768-entry embeddings. Sameness is the point. When only precision differs between two runs, any difference in the result has only one place to come from.</p>
+<h2 id="what-to-remember">What to remember<a class="anchor" href="#what-to-remember" aria-label="Link to this section">#</a></h2>
+<p>A language model converts text into integer tokens from a fixed 32,768-entry vocabulary, and its entire job is to output a probability distribution over which token comes next. That job is performed by an embedding table, a stack of identical blocks each containing attention (which mixes information across positions by weighted averaging) and a feed-forward network (which processes each position on its own), and a tied output head; training adjusts every number in that structure through a repeated cycle of forward pass, loss, backpropagation, and optimizer step. Scale is described by two numbers, parameter count N and training tokens D, and LOGOS counts N as non-embedding parameters because at 3M to 60M the fixed 32k embedding table rivals or exceeds the entire model body, while simultaneously reporting total counts because the embedding is where most of the <em>bytes</em> live. The ratio D/N is the axis along which the low-bit trade-off flips, with 20× being roughly compute-optimal and 320× being the heavily overtrained regime where real deployed models live.</p>
+
+    </article>
+    <nav class="pager">
+      <a class="pager-prev" href="01-the-memory-wall.html"><span>Previous</span>1 · The memory wall</a>
+      <a class="pager-next" href="03-measuring-quality.html"><span>Next</span>3 · Measuring quality</a>
+    </nav>
+    <footer class="foot">
+      <p>Memory-optimal scaling laws for natively low-bit language models · <a href="https://github.com/canivel/logos">source and data on GitHub</a> · Apache-2.0</p>
+    </footer>
+  </main>
+</div>
+<script>
+(function () {
+  var root = document.documentElement;
+  var saved = localStorage.getItem('logos-theme');
+  if (saved) root.setAttribute('data-theme', saved);
+  function currentIsDark() {
+    var attr = root.getAttribute('data-theme');
+    if (attr) return attr === 'dark';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+  function syncFigures() {
+    var explicit = root.getAttribute('data-theme');
+    var dark = currentIsDark();
+    // A <source media="(prefers-color-scheme: dark)"> outranks the <img src>,
+    // so an explicit choice has to retarget the source too, not just the img.
+    document.querySelectorAll('figure.fig source.dark-src').forEach(function (s) {
+      s.media = explicit ? (dark ? 'all' : 'not all') : '(prefers-color-scheme: dark)';
+    });
+    document.querySelectorAll('figure.fig img').forEach(function (img) {
+      var want = dark ? img.dataset.dark : img.dataset.light;
+      if (want && img.getAttribute('src') !== want) img.setAttribute('src', want);
+    });
+  }
+  var btn = document.querySelector('.theme-toggle');
+  if (btn) btn.addEventListener('click', function () {
+    var next = currentIsDark() ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    localStorage.setItem('logos-theme', next);
+    syncFigures();
+  });
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', syncFigures);
+  syncFigures();
+  var navBtn = document.querySelector('.nav-toggle');
+  if (navBtn) navBtn.addEventListener('click', function () {
+    document.querySelector('.sidebar').classList.toggle('open');
+  });
+})();
+</script>
+</body>
+</html>

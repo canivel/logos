@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en" data-theme-pref="system">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chapter 5 — Numbers in a Computer (bits, bytes, and what precision costs) — LOGOS</title>
+<meta name="description" content="This chapter builds the vocabulary the rest of the book runs on: what a bit and a byte are, how a computer stores a real number in floating point, why bf16 became the training defa">
+<meta property="og:title" content="Chapter 5 — Numbers in a Computer (bits, bytes, and what precision costs) — LOGOS">
+<meta property="og:description" content="This chapter builds the vocabulary the rest of the book runs on: what a bit and a byte are, how a computer stores a real number in floating point, why bf16 became the training defa">
+<meta property="og:type" content="article">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>▚</text></svg>">
+<link rel="stylesheet" href="assets/book.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="topbar">
+  <a class="brand" href="index.html"><span class="brand-mark">▚</span> LOGOS</a>
+  <div class="topbar-right">
+    <a class="topbar-link" href="https://github.com/canivel/logos">Repository</a>
+    <button class="theme-toggle" type="button" aria-label="Switch colour theme">◐</button>
+    <button class="nav-toggle" type="button" aria-label="Open chapter list">☰</button>
+  </div>
+</header>
+<div class="shell">
+  <nav class="sidebar" aria-label="Chapters">
+    
+      
+      <ul class="nav-list">
+      
+        <li><a href="index.html" >Start here</a></li>
+      
+      </ul>
+    
+      <div class="nav-part">Part I — Why this exists</div>
+      <ul class="nav-list">
+      
+        <li><a href="01-the-memory-wall.html" >1 · The memory wall</a></li>
+      
+        <li><a href="02-what-a-language-model-is.html" >2 · What a language model is</a></li>
+      
+        <li><a href="03-measuring-quality.html" >3 · Measuring quality</a></li>
+      
+      </ul>
+    
+      <div class="nav-part">Part II — The toolkit</div>
+      <ul class="nav-list">
+      
+        <li><a href="04-scaling-laws.html" >4 · Scaling laws</a></li>
+      
+        <li><a href="05-numbers-in-a-computer.html" class="current" aria-current="page">5 · Numbers in a computer</a></li>
+      
+        <li><a href="06-quantization.html" >6 · Quantization</a></li>
+      
+        <li><a href="07-training-in-low-precision.html" >7 · Training in low precision</a></li>
+      
+        <li><a href="08-the-kv-cache.html" >8 · The KV cache</a></li>
+      
+      </ul>
+    
+      <div class="nav-part">Part III — The research</div>
+      <ul class="nav-list">
+      
+        <li><a href="09-the-question.html" >9 · The question</a></li>
+      
+        <li><a href="10-designing-a-clean-experiment.html" >10 · Designing a clean experiment</a></li>
+      
+        <li><a href="11-building-the-machine.html" >11 · Building the machine</a></li>
+      
+        <li><a href="12-trusting-the-numbers.html" >12 · Trusting the numbers</a></li>
+      
+      </ul>
+    
+      <div class="nav-part">Part IV — Results & what's next</div>
+      <ul class="nav-list">
+      
+        <li><a href="13-what-we-found.html" >13 · What we found so far</a></li>
+      
+        <li><a href="14-fitting-the-law.html" >14 · Fitting the law</a></li>
+      
+        <li><a href="15-the-road-ahead.html" >15 · The road ahead</a></li>
+      
+      </ul>
+    
+      <div class="nav-part">Reference</div>
+      <ul class="nav-list">
+      
+        <li><a href="glossary.html" >Glossary</a></li>
+      
+      </ul>
+    
+  </nav>
+  <main id="main">
+    
+    <details class="toc">
+      <summary>On this page</summary>
+      <ul><li class="toc-l2"><a href="#bits-bytes-and-the-only-formula-you-need">Bits, bytes, and the only formula you need</a></li><li class="toc-l2"><a href="#floating-point-sign-exponent-mantissa">Floating point: sign, exponent, mantissa</a></li><li class="toc-l2"><a href="#integers-plus-a-scale-factor">Integers plus a scale factor</a></li><li class="toc-l2"><a href="#what-k-bits-actually-buys-you">What k bits actually buys you</a></li><li class="toc-l2"><a href="#the-memory-math-that-drives-the-project">The memory math that drives the project</a></li><li class="toc-l2"><a href="#the-other-consumer-of-bytes">The other consumer of bytes</a></li><li class="toc-l2"><a href="#what-to-remember">What to remember</a></li></ul>
+    </details>
+    
+    <article class="prose">
+      <h1 id="chapter-5-numbers-in-a-computer-bits-bytes-and-what-precision-costs">Chapter 5 — Numbers in a Computer (bits, bytes, and what precision costs)<a class="anchor" href="#chapter-5-numbers-in-a-computer-bits-bytes-and-what-precision-costs" aria-label="Link to this section">#</a></h1>
+<p><em>This chapter builds the vocabulary the rest of the book runs on: what a bit and a byte are, how a computer stores a real number in floating point, why bf16 became the training default, how integers plus a shared scale factor can stand in for real numbers, and exactly how many distinct values k bits can hold. Then it does the arithmetic that motivates the entire LOGOS project — how many bytes a model actually occupies — including the awkward accounting detail that small models force you to confront.</em></p>
+<h2 id="bits-bytes-and-the-only-formula-you-need">Bits, bytes, and the only formula you need<a class="anchor" href="#bits-bytes-and-the-only-formula-you-need" aria-label="Link to this section">#</a></h2>
+<p>A <strong>bit</strong> is one binary digit: a 0 or a 1. A <strong>byte</strong> is eight bits. That is the whole foundation.</p>
+<p>When someone says a model is &quot;16-bit,&quot; they mean each parameter — each adjustable number inside the network — is stored using 16 bits, which is 2 bytes. &quot;4-bit&quot; means 4 bits per parameter, half a byte. The parameter is conceptually a real number like −0.0374; the bit width is how much space you spend describing it.</p>
+<p>The memory a model's weights occupy is then just multiplication:</p>
+<pre><code>weight bytes = N × b / 8</code></pre>
+<p>where N is the number of parameters and b is bits per parameter. Do it once slowly. A model with 1,000,000 parameters at 16 bits each occupies 1,000,000 × 16 = 16,000,000 bits, which is 2,000,000 bytes, or 2 MB. Now a real one from the LOGOS ladder: the 25M model has 24,903,680 non-embedding parameters, so at 16 bits that body is 49,807,360 bytes, just under 50 MB. At 4 bits it is 12,451,840 bytes, about 12.5 MB. At 1.58 bits, roughly 4,918,000 bytes — under 5 MB.</p>
+<aside class="callout callout-aside"><span class="callout-label">Worth knowing</span><div class="callout-body"><p>this book uses MB and GB in the decimal sense — 1 MB = 1,000,000 bytes. Some tools use the binary sense (1 MiB = 1,048,576 bytes) and report the same file as about 5% smaller. When you compare footprints across papers, check which convention each one is using.</p></div></aside>
+<h2 id="floating-point-sign-exponent-mantissa">Floating point: sign, exponent, mantissa<a class="anchor" href="#floating-point-sign-exponent-mantissa" aria-label="Link to this section">#</a></h2>
+<p>Real numbers are not integers, and a computer has to encode them somehow. The standard encoding is <strong>floating point</strong>, which works like scientific notation. A number such as −3.75 × 10^2 has three parts: a sign (negative), an exponent (the ×10^2, setting the <em>scale</em>), and a mantissa (the 3.75, setting the <em>detail</em>). Floating point does this in base 2, splitting the available bits into a <strong>sign</strong> bit, a block of <strong>exponent</strong> bits, and a block of <strong>mantissa</strong> bits.</p>
+<p>The split is a genuine trade-off. Exponent bits buy <strong>dynamic range</strong> — how enormous and how minuscule a number the format can express at all. Mantissa bits buy <strong>precision</strong> — how finely it distinguishes two nearby numbers. With a fixed budget you cannot have more of both.</p>
+<table>
+<thead>
+<tr>
+  <th>Format</th>
+  <th>Total bits</th>
+  <th>Sign</th>
+  <th>Exponent</th>
+  <th>Mantissa</th>
+  <th>Character</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>fp32</td>
+  <td>32 (4 bytes)</td>
+  <td>1</td>
+  <td>8</td>
+  <td>23</td>
+  <td>Wide range, high detail, expensive</td>
+</tr>
+<tr>
+  <td>fp16</td>
+  <td>16 (2 bytes)</td>
+  <td>1</td>
+  <td>5</td>
+  <td>10</td>
+  <td>Good detail, narrow range</td>
+</tr>
+<tr>
+  <td><strong>bf16</strong></td>
+  <td>16 (2 bytes)</td>
+  <td>1</td>
+  <td>8</td>
+  <td>7</td>
+  <td>fp32's range, coarse detail</td>
+</tr>
+</tbody>
+</table>
+<p><strong>bf16</strong> (&quot;brain float 16&quot;) is the training default across the field, and the table shows why. It keeps all 8 exponent bits of fp32, so it spans exactly the same range of magnitudes, and gives up mantissa bits instead. Training is full of quantities with wild dynamic range, gradients above all: some are enormous, others near zero, and the scale shifts over the course of a run. fp16, with only 5 exponent bits, runs out of range and produces infinities or silent zeros — which is why fp16 training needs loss-scaling machinery to survive. bf16 does not have that problem, and its coarse 7-bit mantissa costs little, because gradient descent averages over millions of noisy updates and tolerates a little rounding noise per step.</p>
+<p>LOGOS trains in bf16 everywhere, including on the low-bit arms: the <strong>master weights</strong> — the full-precision copies the optimizer actually updates — are bf16, with the quantization arithmetic computed in fp32 for numerical safety. <a href="07-training-in-low-precision.html">Chapter 7</a> explains why a low-bit model still needs high-precision master weights.</p>
+<h2 id="integers-plus-a-scale-factor">Integers plus a scale factor<a class="anchor" href="#integers-plus-a-scale-factor" aria-label="Link to this section">#</a></h2>
+<p>There is a completely different way to store a real number, and it is the trick the entire field of quantization is built on: <strong>store a small integer, and multiply it by a shared scale factor.</strong></p>
+<p>Suppose the largest magnitude in a block of weights is 0.42, and you spend 4 bits per weight, giving integer codes from −8 to 7. Choose a <strong>scale factor</strong> s = 0.42 / 7 = 0.06, so the biggest weight maps onto the biggest code. Each weight w becomes the integer q = round(w / s), and you reconstruct it as q × s. Some illustrative weights run through that:</p>
+<table>
+<thead>
+<tr>
+  <th>Weight</th>
+  <th>w / s</th>
+  <th>Code q</th>
+  <th>Reconstructed q×s</th>
+  <th>Error</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>0.42</td>
+  <td>7.00</td>
+  <td>7</td>
+  <td>0.42</td>
+  <td>0.00</td>
+</tr>
+<tr>
+  <td>−0.13</td>
+  <td>−2.17</td>
+  <td>−2</td>
+  <td>−0.12</td>
+  <td>0.01</td>
+</tr>
+<tr>
+  <td>0.07</td>
+  <td>1.17</td>
+  <td>1</td>
+  <td>0.06</td>
+  <td>0.01</td>
+</tr>
+<tr>
+  <td>−0.38</td>
+  <td>−6.33</td>
+  <td>−6</td>
+  <td>−0.36</td>
+  <td>0.02</td>
+</tr>
+<tr>
+  <td>0.21</td>
+  <td>3.50</td>
+  <td>4</td>
+  <td>0.24</td>
+  <td>0.03</td>
+</tr>
+</tbody>
+</table>
+<p>You no longer have the original numbers. You have a grid spaced 0.06 apart, with every weight snapped to the nearest point. What you bought is storage: five 4-bit codes plus one shared scale, instead of five 16-bit floats.</p>
+<aside class="callout callout-plain"><span class="callout-label">In plain terms</span><div class="callout-body"><p>quantization means keeping a coarse ruler and a bunch of tick marks. The scale factor is the ruler's unit; the integer code says which tick. You reconstruct an approximation, never the original.</p></div></aside>
+<p>The scale must be stored too, at higher precision — typically fp32, 4 bytes. That is negligible if many weights share it and expensive if they do not, a point that returns in the next section and again in <a href="06-quantization.html">Chapter 6</a>.</p>
+<h2 id="what-k-bits-actually-buys-you">What k bits actually buys you<a class="anchor" href="#what-k-bits-actually-buys-you" aria-label="Link to this section">#</a></h2>
+<p>With k bits you can write 2^k distinct bit patterns, so k bits can name at most 2^k distinct values. That single line generates the whole ladder.</p>
+<table>
+<thead>
+<tr>
+  <th>Format</th>
+  <th>Bits per weight</th>
+  <th>Distinct values</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>bf16</td>
+  <td>16</td>
+  <td>2^16 = 65,536 patterns — effectively continuous at the scale of a weight distribution</td>
+</tr>
+<tr>
+  <td>8-bit int</td>
+  <td>8</td>
+  <td>256</td>
+</tr>
+<tr>
+  <td>4-bit int</td>
+  <td>4</td>
+  <td>16</td>
+</tr>
+<tr>
+  <td>3-bit int</td>
+  <td>3</td>
+  <td>8</td>
+</tr>
+<tr>
+  <td>2-bit int</td>
+  <td>2</td>
+  <td>4</td>
+</tr>
+<tr>
+  <td><strong>ternary</strong></td>
+  <td><strong>log2(3) ≈ 1.58</strong></td>
+  <td><strong>3: −1, 0, +1</strong></td>
+</tr>
+</tbody>
+</table>
+<p>The jump from bf16 to 4-bit is not a modest loss of fidelity. It goes from a grid so fine it might as well be continuous down to sixteen tick marks — and then eight, four, and finally three.</p>
+<p>Ternary deserves its own explanation, because &quot;1.58 bits&quot; looks like a typo the first time you see it. A ternary weight takes one of three values: −1, 0, or +1, times a scale. Stored on its own it would need 2 bits, since 1 bit gives only two options. But information is not measured in whole bits when values are packed together: a run of n ternary weights has 3^n possible combinations, and naming one of 3^n possibilities takes log2(3^n) = n × log2(3) bits. Since log2(3) ≈ 1.585, the information content is about <strong>1.58 bits per weight</strong>.</p>
+<p>A single base-3 digit is called a <strong>trit</strong>, by analogy with &quot;bit&quot; for a base-2 digit — and that is where the LOGOS model suite gets its name: <strong>TRIT</strong>.</p>
+<p>The figure below lays the formats side by side: how each one spends its bits, and how many distinct values comes out the other end.</p>
+<figure class="fig"><picture><source srcset="figures/number-formats-dark.png" media="(prefers-color-scheme: dark)" class="dark-src"><img src="figures/number-formats.png" alt="How the formats lay out their bits and what that buys: bf16 splits 16 bits into sign, 8 exponent, and 7 mantissa bits; int4, int3 and int2 spend all their bits on an integer code read against a shared scale; ternary stores one of three values at an information content of log2(3) ≈ 1.58 bits." loading="lazy" data-light="figures/number-formats.png" data-dark="figures/number-formats-dark.png"></picture><figcaption>How the formats lay out their bits and what that buys: bf16 splits 16 bits into sign, 8 exponent, and 7 mantissa bits; int4, int3 and int2 spend all their bits on an integer code read against a shared scale; ternary stores one of three values at an information content of log2(3) ≈ 1.58 bits.</figcaption></figure>
+<p>One honest wrinkle. Information theory says 1.58 bits per ternary weight, but real formats must write bytes, and LOGOS's export packs ternary weights as <strong>2-bit codes</strong> — about 26% more than the theoretical minimum. That is why LOGOS measures footprints from actual packed bytes rather than trusting N × b / 8.</p>
+<h2 id="the-memory-math-that-drives-the-project">The memory math that drives the project<a class="anchor" href="#the-memory-math-that-drives-the-project" aria-label="Link to this section">#</a></h2>
+<p>Now scale it up. A one-billion-parameter model:</p>
+<table>
+<thead>
+<tr>
+  <th>Precision</th>
+  <th>Weight bytes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>bf16 (16 bits)</td>
+  <td>1e9 × 16 / 8 = 2,000,000,000 bytes = <strong>2 GB</strong></td>
+</tr>
+<tr>
+  <td>4-bit</td>
+  <td>1e9 × 4 / 8 = 500,000,000 bytes = <strong>500 MB</strong></td>
+</tr>
+<tr>
+  <td>ternary (1.58 bits)</td>
+  <td>1e9 × 1.58 / 8 ≈ 197,500,000 bytes ≈ <strong>200 MB</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Two gigabytes versus two hundred megabytes is the difference between a model that needs a datacenter accelerator and one that fits in a phone. That factor of ten is the prize. But the clean arithmetic hides two costs, and LOGOS reports both.</p>
+<p><strong>Scales are stored per group.</strong> A single scale for a whole weight matrix wastes most of the integer grid (<a href="06-quantization.html">Chapter 6</a> explains why), so real quantizers use one scale per small <strong>group</strong> of weights — LOGOS uses groups of 128. A group of 128 weights at 4 bits is 64 bytes of codes plus one fp32 scale at 4 bytes: 68 bytes for 128 weights, or 68 × 8 / 128 = <strong>4.25 effective bits per weight</strong>, not 4.00. At 2 bits the same accounting gives 36 bytes per group, 2.25 effective bits. Small, but not zero — and a growing fraction as the bit width shrinks.</p>
+<p><strong>The embedding table stays 16-bit.</strong> A model's <strong>embedding table</strong> maps each token in the vocabulary to a vector; LOGOS uses a 32,768-entry vocabulary with tied input/output embeddings, kept in bf16 on every arm. At large sizes this is a rounding error. At small sizes it is the whole story.</p>
+<p>Work the project's own case. The 25M ternary model has 24,903,680 non-embedding parameters, packed as 2-bit codes — 6,225,920 bytes of codes, and with the per-tensor scales and the never-quantized norm parameters the measured packed <strong>body</strong> is <strong>6,277,120 bytes</strong>. The embedding is 32,768 × 512 = 16,777,216 parameters at 2 bytes each: <strong>33,554,432 bytes</strong>. Total artifact: 39,831,552 bytes, of which the embedding is <strong>84%</strong>.</p>
+<aside class="callout callout-matters"><span class="callout-label">Why this matters</span><div class="callout-body"><p>you could quantize that body to literally zero bits and shrink the file by only 16%. Any byte claim about a small model that quotes a single number is therefore ambiguous or misleading. LOGOS's rule is explicit: at this scale, byte budgets are <strong>body-byte budgets</strong> — the non-embedding weights — and <em>both</em> counts are reported everywhere. The law itself is fitted on non-embedding N for the same reason, and the project states this as a standing disclosure rather than a footnote.</p></div></aside>
+<h2 id="the-other-consumer-of-bytes">The other consumer of bytes<a class="anchor" href="#the-other-consumer-of-bytes" aria-label="Link to this section">#</a></h2>
+<p>Weights are not the only thing in memory when a model runs. Generating text one token at a time requires remembering what was already computed for every previous token, and that store is the <strong>KV cache</strong>. It grows with conversation length and with the number of simultaneous users — and unlike weights it is not shared, since every concurrent user has their own.</p>
+<p>A preview of the size, computed from the same 25M configuration: that model caches 2 × 8 layers × 2 key/value heads × 64 dimensions = 2,048 values per token, at 2 bytes each in bf16, so <strong>4,096 bytes per token of context</strong>. At an 8,192-token context, that is 33,554,432 bytes — over five times the 6.28 MB weight body, for a single user.</p>
+<figure class="fig"><picture><source srcset="figures/bytes-budget-dark.png" media="(prefers-color-scheme: dark)" class="dark-src"><img src="figures/bytes-budget.png" alt="Where a deployed model&#x27;s bytes go: the fixed weight footprint against the KV cache, which grows with context length and with concurrent users, for several weight precisions." loading="lazy" data-light="figures/bytes-budget.png" data-dark="figures/bytes-budget-dark.png"></picture><figcaption>Where a deployed model's bytes go: the fixed weight footprint against the KV cache, which grows with context length and with concurrent users, for several weight precisions.</figcaption></figure>
+<p><a href="08-the-kv-cache.html">Chapter 8</a> unpacks that figure properly. For now, register the shape: as context grows the cache overtakes the weights, and a byte budget that counts only weights is counting the wrong thing.</p>
+<h2 id="what-to-remember">What to remember<a class="anchor" href="#what-to-remember" aria-label="Link to this section">#</a></h2>
+<p>A bit is a binary digit, a byte is eight of them, and weight memory is nothing more complicated than N × b / 8 — a formula worth being able to run in your head, because every argument in this book bottoms out in it. Floating point trades exponent bits for range against mantissa bits for detail, which is why bf16 keeps fp32's full exponent and throws away mantissa: training needs range far more than it needs decimals. Quantization replaces that machinery with small integers read against a shared scale factor, and since k bits can name at most 2^k values, the ladder from 4 bits to ternary runs 16, 8, 4, 3 distinct levels — with ternary's three values carrying log2(3) ≈ 1.58 bits of information, the number that gives TRIT its name. The savings are real and large — a billion parameters is 2 GB at bf16 and about 200 MB ternary — but real formats carry per-group scale overhead, ternary packs into 2-bit codes rather than 1.58, and at small scale a 16-bit embedding table can be 84% of the artifact, which is why LOGOS quotes body bytes and total bytes together and never one alone.</p>
+
+    </article>
+    <nav class="pager">
+      <a class="pager-prev" href="04-scaling-laws.html"><span>Previous</span>4 · Scaling laws</a>
+      <a class="pager-next" href="06-quantization.html"><span>Next</span>6 · Quantization</a>
+    </nav>
+    <footer class="foot">
+      <p>Memory-optimal scaling laws for natively low-bit language models · <a href="https://github.com/canivel/logos">source and data on GitHub</a> · Apache-2.0</p>
+    </footer>
+  </main>
+</div>
+<script>
+(function () {
+  var root = document.documentElement;
+  var saved = localStorage.getItem('logos-theme');
+  if (saved) root.setAttribute('data-theme', saved);
+  function currentIsDark() {
+    var attr = root.getAttribute('data-theme');
+    if (attr) return attr === 'dark';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+  function syncFigures() {
+    var explicit = root.getAttribute('data-theme');
+    var dark = currentIsDark();
+    // A <source media="(prefers-color-scheme: dark)"> outranks the <img src>,
+    // so an explicit choice has to retarget the source too, not just the img.
+    document.querySelectorAll('figure.fig source.dark-src').forEach(function (s) {
+      s.media = explicit ? (dark ? 'all' : 'not all') : '(prefers-color-scheme: dark)';
+    });
+    document.querySelectorAll('figure.fig img').forEach(function (img) {
+      var want = dark ? img.dataset.dark : img.dataset.light;
+      if (want && img.getAttribute('src') !== want) img.setAttribute('src', want);
+    });
+  }
+  var btn = document.querySelector('.theme-toggle');
+  if (btn) btn.addEventListener('click', function () {
+    var next = currentIsDark() ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    localStorage.setItem('logos-theme', next);
+    syncFigures();
+  });
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', syncFigures);
+  syncFigures();
+  var navBtn = document.querySelector('.nav-toggle');
+  if (navBtn) navBtn.addEventListener('click', function () {
+    document.querySelector('.sidebar').classList.toggle('open');
+  });
+})();
+</script>
+</body>
+</html>

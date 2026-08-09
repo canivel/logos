@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en" data-theme-pref="system">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chapter 14 — Fitting the law — LOGOS</title>
+<meta name="description" content="This chapter explains how a pile of training runs becomes a law you can use — what functional forms are on the table, how one is chosen without fooling yourself, how the uncertaint">
+<meta property="og:title" content="Chapter 14 — Fitting the law — LOGOS">
+<meta property="og:description" content="This chapter explains how a pile of training runs becomes a law you can use — what functional forms are on the table, how one is chosen without fooling yourself, how the uncertaint">
+<meta property="og:type" content="article">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>▚</text></svg>">
+<link rel="stylesheet" href="assets/book.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="topbar">
+  <a class="brand" href="index.html"><span class="brand-mark">▚</span> LOGOS</a>
+  <div class="topbar-right">
+    <a class="topbar-link" href="https://github.com/canivel/logos">Repository</a>
+    <button class="theme-toggle" type="button" aria-label="Switch colour theme">◐</button>
+    <button class="nav-toggle" type="button" aria-label="Open chapter list">☰</button>
+  </div>
+</header>
+<div class="shell">
+  <nav class="sidebar" aria-label="Chapters">
+    
+      
+      <ul class="nav-list">
+      
+        <li><a href="index.html" >Start here</a></li>
+      
+      </ul>
+    
+      <div class="nav-part">Part I — Why this exists</div>
+      <ul class="nav-list">
+      
+        <li><a href="01-the-memory-wall.html" >1 · The memory wall</a></li>
+      
+        <li><a href="02-what-a-language-model-is.html" >2 · What a language model is</a></li>
+      
+        <li><a href="03-measuring-quality.html" >3 · Measuring quality</a></li>
+      
+      </ul>
+    
+      <div class="nav-part">Part II — The toolkit</div>
+      <ul class="nav-list">
+      
+        <li><a href="04-scaling-laws.html" >4 · Scaling laws</a></li>
+      
+        <li><a href="05-numbers-in-a-computer.html" >5 · Numbers in a computer</a></li>
+      
+        <li><a href="06-quantization.html" >6 · Quantization</a></li>
+      
+        <li><a href="07-training-in-low-precision.html" >7 · Training in low precision</a></li>
+      
+        <li><a href="08-the-kv-cache.html" >8 · The KV cache</a></li>
+      
+      </ul>
+    
+      <div class="nav-part">Part III — The research</div>
+      <ul class="nav-list">
+      
+        <li><a href="09-the-question.html" >9 · The question</a></li>
+      
+        <li><a href="10-designing-a-clean-experiment.html" >10 · Designing a clean experiment</a></li>
+      
+        <li><a href="11-building-the-machine.html" >11 · Building the machine</a></li>
+      
+        <li><a href="12-trusting-the-numbers.html" >12 · Trusting the numbers</a></li>
+      
+      </ul>
+    
+      <div class="nav-part">Part IV — Results & what's next</div>
+      <ul class="nav-list">
+      
+        <li><a href="13-what-we-found.html" >13 · What we found so far</a></li>
+      
+        <li><a href="14-fitting-the-law.html" class="current" aria-current="page">14 · Fitting the law</a></li>
+      
+        <li><a href="15-the-road-ahead.html" >15 · The road ahead</a></li>
+      
+      </ul>
+    
+      <div class="nav-part">Reference</div>
+      <ul class="nav-list">
+      
+        <li><a href="glossary.html" >Glossary</a></li>
+      
+      </ul>
+    
+  </nav>
+  <main id="main">
+    
+    <details class="toc">
+      <summary>On this page</summary>
+      <ul><li class="toc-l2"><a href="#what-we-are-fitting">What we are fitting</a></li><li class="toc-l2"><a href="#two-theories-in-equation-form">Two theories, in equation form</a></li><li class="toc-l2"><a href="#fitting-without-fooling-yourself">Fitting without fooling yourself</a></li><li class="toc-l2"><a href="#choosing-between-forms-the-rule-that-prevents-the-classic-mistake">Choosing between forms — the rule that prevents the classic mistake</a></li><li class="toc-l2"><a href="#how-confident-is-the-answer">How confident is the answer?</a></li><li class="toc-l2"><a href="#the-blind-test">The blind test</a></li><li class="toc-l2"><a href="#cashing-it-in-from-a-law-to-a-recommendation">Cashing it in: from a law to a recommendation</a></li><li class="toc-l2"><a href="#what-to-remember">What to remember</a></li></ul>
+    </details>
+    
+    <article class="prose">
+      <h1 id="chapter-14-fitting-the-law">Chapter 14 — Fitting the law<a class="anchor" href="#chapter-14-fitting-the-law" aria-label="Link to this section">#</a></h1>
+<p><em>This chapter explains how a pile of training runs becomes a law you can use — what functional forms are on the table, how one is chosen without fooling yourself, how the uncertainty is quantified, and what has to happen before anyone should believe the answer.</em></p>
+<p>By the end of the grid there will be roughly a hundred numbers: for each combination of model size, precision, and training duration, one validation loss. A law turns that table into a function — something you can evaluate at a size you never trained, at a byte budget you care about, to get an answer. This chapter is about the machinery that does that, and about the several distinct ways it can quietly go wrong.</p>
+<p>None of this has run on real data yet. The grid is still filling in. What follows is the method as implemented and tested against synthetic data with known answers, which is the only honest way to describe it right now.</p>
+<h2 id="what-we-are-fitting">What we are fitting<a class="anchor" href="#what-we-are-fitting" aria-label="Link to this section">#</a></h2>
+<p>The target is a function that predicts validation loss from three inputs: <strong>N</strong>, the number of non-embedding parameters; <strong>D</strong>, the number of training tokens; and <strong>b</strong>, the bits per weight.</p>
+<aside class="callout callout-plain"><span class="callout-label">In plain terms</span><div class="callout-body"><p>we want a formula where you plug in &quot;a 50-million-parameter model, 2-bit weights, trained on 4 billion tokens&quot; and it tells you the bits-per-byte you should expect — including for combinations nobody has trained.</p></div></aside>
+<p>The starting point is the Chinchilla form from <a href="04-scaling-laws.html">Chapter 4</a>, which handles N and D:</p>
+<pre><code>L(N, D) = E + A/N^α + B/D^β
+</code></pre>
+<p>Precision has to enter somewhere. The interesting part is that there is more than one plausible place to put it, and the choices make <em>different predictions</em> in the regime this project cares about most.</p>
+<h2 id="two-theories-in-equation-form">Two theories, in equation form<a class="anchor" href="#two-theories-in-equation-form" aria-label="Link to this section">#</a></h2>
+<p><strong>Form A — effective capacity.</strong> The idea: a low-bit parameter is simply worth less than a full-precision one. So take the parameter count and discount it by a factor f(b) that depends on bit width.</p>
+<pre><code>L(N, D, b) = E + A/(N·f(b))^α + B/D^β
+</code></pre>
+<p>Here <strong>f(b)</strong> is the <em>effective capacity</em> of a b-bit parameter, a number between 0 and 1 with f(16) fixed to 1 by definition. If ternary parameters were worth 55% of a full-precision one, f(1.58) = 0.55, and a ternary model would behave exactly like a full-precision model with 55% as many parameters. The penalty for low precision is fixed, and more training does not change it.</p>
+<p><strong>Form B — additive degradation.</strong> The idea: precision loss is a separate penalty term that grows with training and shrinks with model size.</p>
+<pre><code>L(N, D, b) = E + A/N^α + B/D^β + C·g(b)·D^δ/N^η
+</code></pre>
+<p>The extra term is zero for full precision (g(16) = 0) and grows with D. Here, the penalty for low precision is <em>not</em> fixed — it gets worse the longer you train.</p>
+<aside class="callout callout-matters"><span class="callout-label">Why this matters</span><div class="callout-body"><p>these two are not stylistic variants. In the heavily overtrained regime — 320 tokens per parameter and beyond, where every deployed model lives — Form A says the low-bit gap stabilizes, and Form B says it keeps widening. They will fit the existing data comparably and then disagree about the thing you actually want to know.</p></div></aside>
+<p>The measurements in <a href="13-what-we-found.html">Chapter 13</a> already lean one way: from 20× to 320× at 3M parameters, the ternary gap grew monotonically with no sign of flattening, and it grew with model size at fixed training duration. That is Form B's signature. But six cells is not a fit, and the point of having competing forms is to let the data choose rather than the researcher.</p>
+<p>A third option, Form C, includes both mechanisms with a penalty that discourages the extra term from being used unless it earns its place.</p>
+<h2 id="fitting-without-fooling-yourself">Fitting without fooling yourself<a class="anchor" href="#fitting-without-fooling-yourself" aria-label="Link to this section">#</a></h2>
+<p>Fitting means choosing the parameters (E, A, B, α, β, and the f or g values) that make the formula best match the measurements. Three details matter more than they might appear.</p>
+<p><strong>Fit the logarithm, not the raw loss.</strong> Losses across the grid span a wide range. Fitting raw differences would let the largest-loss runs dominate. Working with log residuals — the difference between log(predicted) and log(observed) — makes the fit care about <em>relative</em> error, which is what a law across orders of magnitude should care about.</p>
+<p><strong>Use a robust loss.</strong> One bad run — a training instability, a corrupted shard — should not bend the whole law. The fit uses a <strong>Huber loss</strong>, which behaves like a normal squared-error fit for small residuals but grows only linearly for large ones, so an outlier can pull a little but not a lot.</p>
+<p><strong>Weight by measured noise.</strong> Not every cell in the grid is equally trustworthy: seed noise varies about fourfold across cells (0.006 to 0.066 bits per byte). Treating a noisy single-seed cell as equal evidence to a clean three-seed cell is throwing away information. Each row is weighted by one over its measured variance, so quiet cells pull harder — a change made after an external reviewer pointed out the original fit treated all rows alike.</p>
+<p>The optimizer itself is unremarkable and deliberately so: a bounded quasi-Newton method (L-BFGS-B) started from 256 different initial guesses, keeping the best result. Multiple starts matter because these surfaces have local minima; a single start can converge somewhere confidently wrong. The whole procedure is deterministic given a seed, so the same data always produces the same law.</p>
+<h2 id="choosing-between-forms-the-rule-that-prevents-the-classic-mistake">Choosing between forms — the rule that prevents the classic mistake<a class="anchor" href="#choosing-between-forms-the-rule-that-prevents-the-classic-mistake" aria-label="Link to this section">#</a></h2>
+<p>Here is the trap. Give a formula more free parameters and it will always fit your existing data better. Form C has more knobs than Form A, so Form C will win on in-sample fit essentially every time — and may be worse at the only thing that matters, which is predicting something it has not seen.</p>
+<p>The project never selects on in-sample fit. Selection is by <strong>leave-one-size-out</strong> extrapolation: hold out every run at one model size, fit on the rest, and measure how well the fit predicts the held-out size. Repeat for each size. The form with the lowest held-out error wins.</p>
+<p>There is a stricter variant used for the real credibility test: fit only on sizes <em>below</em> the largest, and predict the largest. That is the direction that matters — laws are used to extrapolate upward, never downward.</p>
+<aside class="callout callout-aside"><span class="callout-label">Worth knowing</span><div class="callout-body"><p>this machinery is tested against synthetic data where the true answer is known. A probe generates a grid from hidden parameters the fitter never sees, then checks that the recovered exponents land within 15% and the effective-capacity values within 10%, that leave-one-size-out selection picks the form that actually generated the data, and that the resulting byte-budget prescription matches the one derived from the true law on at least 90% of a test grid. The verification chapter covers why that construction is the whole point.</p></div></aside>
+<h2 id="how-confident-is-the-answer">How confident is the answer?<a class="anchor" href="#how-confident-is-the-answer" aria-label="Link to this section">#</a></h2>
+<p>A single best-fit number is not a result; a result has a range. The project uses <strong>bootstrapping</strong>: resample the runs with replacement (stratified by size and precision so the resample keeps the grid's shape), refit, and repeat. Do it a few hundred times and you have a distribution for every quantity — each exponent, each f(b), and each derived crossover point. The 5th and 95th percentiles of that distribution are the confidence interval.</p>
+<p>This is what lets the project say &quot;ternary retains 55% of full-precision capacity, plus or minus 4 points&quot; rather than &quot;ternary retains 55%&quot;, which would be a number pretending to a precision it does not have.</p>
+<h2 id="the-blind-test">The blind test<a class="anchor" href="#the-blind-test" aria-label="Link to this section">#</a></h2>
+<p>Fitting a curve through points you already have is not evidence that the curve is right. The test is prediction.</p>
+<p>The protocol is deliberately awkward, because awkward is the point:</p>
+<ol>
+<li>The grid finishes. The law is fitted and <strong>frozen</strong>.</li>
+<li>The predicted losses for the 125M-parameter validation runs — which have not been trained — are written to a file and <strong>committed to the repository with a timestamp</strong>.</li>
+<li>Only then do those runs launch, on rented cloud hardware, within a hard $100 cap.</li>
+<li>The predictions are compared against what actually happened.</li>
+</ol>
+<p>The acceptance criteria are set in advance too: predicted losses must land within twice the band implied by measured seed noise, <em>and</em> the predicted ordering of precisions at 125M must be correct. Getting the ordering right matters independently — a law that is off by a constant but ranks the options correctly is still useful for choosing a configuration.</p>
+<aside class="callout callout-matters"><span class="callout-label">Why this matters</span><div class="callout-body"><p>without the timestamp, there is no way for a reader — or for the researcher — to know whether the fit was adjusted after seeing the answer. Not because anyone would cheat deliberately, but because the temptation to &quot;fix an obvious problem with the fit&quot; after seeing a mismatch is enormous and feels like diligence. A public timestamp removes the option.</p></div></aside>
+<p>If the prediction misses, that is reported as a result, not buried. A law that bends at 125M is genuinely informative: it tells you the small-scale regime is not the same regime, which is exactly the kind of thing a field needs to know.</p>
+<h2 id="cashing-it-in-from-a-law-to-a-recommendation">Cashing it in: from a law to a recommendation<a class="anchor" href="#cashing-it-in-from-a-law-to-a-recommendation" aria-label="Link to this section">#</a></h2>
+<p>A fitted law is not yet useful. Turning it into advice takes two more steps.</p>
+<p>First, <strong>convert bytes to configurations</strong>. For a given budget M and bit width b, the largest model that fits has N = M × 8 / b parameters — but with a correction, because real packed formats carry overhead. The project measures actual packed sizes rather than trusting the arithmetic, for the reason <a href="05-numbers-in-a-computer.html">Chapter 5</a> gives: per-group scales and a 16-bit embedding table are real bytes that the simple formula ignores.</p>
+<p>Second, <strong>optimize within the budget</strong>. For every budget and every training duration, evaluate the fitted law at each bit width's best allowed parameter count and take the winner. Two pictures come out of this:</p>
+<p>The <strong>iso-memory frontier</strong> answers &quot;at each byte budget, what is the best loss achievable, and by which precision?&quot; It is the headline figure of the project: a set of curves, one per bit width, whose crossings are the practical answer to which precision to choose.</p>
+<p>The <strong>b*(M, D) phase diagram</strong> answers the same question as a map. Budget on one axis, training duration on the other, and the colour at each point is the winning bit width. Regions of the same colour are regimes where the same answer holds; the boundaries between them are the crossovers.</p>
+<figure class="fig"><picture><source srcset="figures/iso-memory-dark.png" media="(prefers-color-scheme: dark)" class="dark-src"><img src="figures/iso-memory.png" alt="At a fixed byte budget, fewer bits buys more parameters but each is worth less. Where the product peaks is what the fitted law will locate — this schematic shows why a peak exists at all, not where it sits." loading="lazy" data-light="figures/iso-memory.png" data-dark="figures/iso-memory-dark.png"></picture><figcaption>At a fixed byte budget, fewer bits buys more parameters but each is worth less. Where the product peaks is what the fitted law will locate — this schematic shows why a peak exists at all, not where it sits.</figcaption></figure>
+<p>One honest complication, raised in external review and now built in: at a fixed byte budget, the many-parameters-few-bits option can cost several times more <em>training compute</em> than the few-parameters-many-bits option, since training cost scales with parameter count. The prescription optimizes deployment bytes, which is defensible when you train once and serve for months — but only if the training cost is visible. So the phase diagram carries contour lines of equal training compute laid over it. A reader can see both what is optimal to deploy and what it costs to obtain.</p>
+<h2 id="what-to-remember">What to remember<a class="anchor" href="#what-to-remember" aria-label="Link to this section">#</a></h2>
+<p>The law is a formula predicting loss from parameters, tokens, and bits, and the interesting choice is <em>where precision enters it</em>: one candidate makes low-bit penalties fixed, another makes them grow with training, and they disagree exactly in the overtrained regime everyone deploys in. The fit uses log residuals, a robust loss, noise-based weighting, and many starting points, but none of that determines which form wins — selection is by held-out extrapolation to a size the fit never saw, never by in-sample quality. Uncertainty comes from bootstrap resampling, so every reported exponent and crossover carries an interval. The real test is a blind one: freeze the law, commit timestamped predictions, then train the validation anchors and compare. The payoff is a frontier and a phase diagram that say which precision wins at which budget — with training-compute contours drawn on top, so the recommendation is honest about what it costs to follow.</p>
+
+    </article>
+    <nav class="pager">
+      <a class="pager-prev" href="13-what-we-found.html"><span>Previous</span>13 · What we found so far</a>
+      <a class="pager-next" href="15-the-road-ahead.html"><span>Next</span>15 · The road ahead</a>
+    </nav>
+    <footer class="foot">
+      <p>Memory-optimal scaling laws for natively low-bit language models · <a href="https://github.com/canivel/logos">source and data on GitHub</a> · Apache-2.0</p>
+    </footer>
+  </main>
+</div>
+<script>
+(function () {
+  var root = document.documentElement;
+  var saved = localStorage.getItem('logos-theme');
+  if (saved) root.setAttribute('data-theme', saved);
+  function currentIsDark() {
+    var attr = root.getAttribute('data-theme');
+    if (attr) return attr === 'dark';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+  function syncFigures() {
+    var explicit = root.getAttribute('data-theme');
+    var dark = currentIsDark();
+    // A <source media="(prefers-color-scheme: dark)"> outranks the <img src>,
+    // so an explicit choice has to retarget the source too, not just the img.
+    document.querySelectorAll('figure.fig source.dark-src').forEach(function (s) {
+      s.media = explicit ? (dark ? 'all' : 'not all') : '(prefers-color-scheme: dark)';
+    });
+    document.querySelectorAll('figure.fig img').forEach(function (img) {
+      var want = dark ? img.dataset.dark : img.dataset.light;
+      if (want && img.getAttribute('src') !== want) img.setAttribute('src', want);
+    });
+  }
+  var btn = document.querySelector('.theme-toggle');
+  if (btn) btn.addEventListener('click', function () {
+    var next = currentIsDark() ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    localStorage.setItem('logos-theme', next);
+    syncFigures();
+  });
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', syncFigures);
+  syncFigures();
+  var navBtn = document.querySelector('.nav-toggle');
+  if (navBtn) navBtn.addEventListener('click', function () {
+    document.querySelector('.sidebar').classList.toggle('open');
+  });
+})();
+</script>
+</body>
+</html>

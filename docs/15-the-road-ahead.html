@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en" data-theme-pref="system">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chapter 15 — The road ahead — LOGOS</title>
+<meta name="description" content="This chapter lays out what is left to do, what it costs, what would count as failure, and how to run any of it yourself. It also makes the case for why a project this size is worth">
+<meta property="og:title" content="Chapter 15 — The road ahead — LOGOS">
+<meta property="og:description" content="This chapter lays out what is left to do, what it costs, what would count as failure, and how to run any of it yourself. It also makes the case for why a project this size is worth">
+<meta property="og:type" content="article">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>▚</text></svg>">
+<link rel="stylesheet" href="assets/book.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="topbar">
+  <a class="brand" href="index.html"><span class="brand-mark">▚</span> LOGOS</a>
+  <div class="topbar-right">
+    <a class="topbar-link" href="https://github.com/canivel/logos">Repository</a>
+    <button class="theme-toggle" type="button" aria-label="Switch colour theme">◐</button>
+    <button class="nav-toggle" type="button" aria-label="Open chapter list">☰</button>
+  </div>
+</header>
+<div class="shell">
+  <nav class="sidebar" aria-label="Chapters">
+    
+      
+      <ul class="nav-list">
+      
+        <li><a href="index.html" >Start here</a></li>
+      
+      </ul>
+    
+      <div class="nav-part">Part I — Why this exists</div>
+      <ul class="nav-list">
+      
+        <li><a href="01-the-memory-wall.html" >1 · The memory wall</a></li>
+      
+        <li><a href="02-what-a-language-model-is.html" >2 · What a language model is</a></li>
+      
+        <li><a href="03-measuring-quality.html" >3 · Measuring quality</a></li>
+      
+      </ul>
+    
+      <div class="nav-part">Part II — The toolkit</div>
+      <ul class="nav-list">
+      
+        <li><a href="04-scaling-laws.html" >4 · Scaling laws</a></li>
+      
+        <li><a href="05-numbers-in-a-computer.html" >5 · Numbers in a computer</a></li>
+      
+        <li><a href="06-quantization.html" >6 · Quantization</a></li>
+      
+        <li><a href="07-training-in-low-precision.html" >7 · Training in low precision</a></li>
+      
+        <li><a href="08-the-kv-cache.html" >8 · The KV cache</a></li>
+      
+      </ul>
+    
+      <div class="nav-part">Part III — The research</div>
+      <ul class="nav-list">
+      
+        <li><a href="09-the-question.html" >9 · The question</a></li>
+      
+        <li><a href="10-designing-a-clean-experiment.html" >10 · Designing a clean experiment</a></li>
+      
+        <li><a href="11-building-the-machine.html" >11 · Building the machine</a></li>
+      
+        <li><a href="12-trusting-the-numbers.html" >12 · Trusting the numbers</a></li>
+      
+      </ul>
+    
+      <div class="nav-part">Part IV — Results & what's next</div>
+      <ul class="nav-list">
+      
+        <li><a href="13-what-we-found.html" >13 · What we found so far</a></li>
+      
+        <li><a href="14-fitting-the-law.html" >14 · Fitting the law</a></li>
+      
+        <li><a href="15-the-road-ahead.html" class="current" aria-current="page">15 · The road ahead</a></li>
+      
+      </ul>
+    
+      <div class="nav-part">Reference</div>
+      <ul class="nav-list">
+      
+        <li><a href="glossary.html" >Glossary</a></li>
+      
+      </ul>
+    
+  </nav>
+  <main id="main">
+    
+    <details class="toc">
+      <summary>On this page</summary>
+      <ul><li class="toc-l2"><a href="#where-the-project-actually-is">Where the project actually is</a></li><li class="toc-l2"><a href="#the-hundred-dollar-experiment">The hundred-dollar experiment</a></li><li class="toc-l2"><a href="#what-would-count-as-failure">What would count as failure</a></li><li class="toc-l2"><a href="#the-model-at-the-end">The model at the end</a></li><li class="toc-l2"><a href="#run-it-yourself">Run it yourself</a></li><li class="toc-l2"><a href="#why-do-this-on-a-desk">Why do this on a desk</a></li><li class="toc-l2"><a href="#what-to-remember">What to remember</a></li></ul>
+    </details>
+    
+    <article class="prose">
+      <h1 id="chapter-15-the-road-ahead">Chapter 15 — The road ahead<a class="anchor" href="#chapter-15-the-road-ahead" aria-label="Link to this section">#</a></h1>
+<p><em>This chapter lays out what is left to do, what it costs, what would count as failure, and how to run any of it yourself. It also makes the case for why a project this size is worth doing on a desk rather than in a datacenter.</em></p>
+<h2 id="where-the-project-actually-is">Where the project actually is<a class="anchor" href="#where-the-project-actually-is" aria-label="Link to this section">#</a></h2>
+<p>Two of six phases are done or nearly so. The replication tier established the noise floor and produced the crossover result. The protocol tier is mid-flight: the learning-rate probes are in, the grid extension that brackets them is queued behind the current runs, and the wider precision study at 12M parameters has begun to land.</p>
+<table>
+<thead>
+<tr>
+  <th>Phase</th>
+  <th>Question it answers</th>
+  <th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>L0</td>
+  <td>Does the stack reproduce known behaviour, and how noisy is a run?</td>
+  <td>Complete — 28 runs</td>
+</tr>
+<tr>
+  <td>L1</td>
+  <td>How does the low-bit gap evolve with training duration?</td>
+  <td>Running</td>
+</tr>
+<tr>
+  <td>L2</td>
+  <td>The law itself, across 3M–60M parameters and five precisions</td>
+  <td>Queued, auto-chained</td>
+</tr>
+<tr>
+  <td>L3</td>
+  <td>Does the law predict a size it never saw?</td>
+  <td>Not started — needs L2</td>
+</tr>
+<tr>
+  <td>L4</td>
+  <td>When does the attention cache dominate the budget?</td>
+  <td>Not started</td>
+</tr>
+<tr>
+  <td>L5</td>
+  <td>Does the law's prescription beat same-budget alternatives?</td>
+  <td>Not started</td>
+</tr>
+</tbody>
+</table>
+<p>Across all phases the manifests specify 125 local runs totalling about 884 GPU-hours, of which roughly 570 remain — weeks of wall-clock time on one card, running unattended. The queue drains cheapest-run-first, chains from one phase to the next without human intervention, and skips anything already recorded, so an interruption costs at most one run.</p>
+<h2 id="the-hundred-dollar-experiment">The hundred-dollar experiment<a class="anchor" href="#the-hundred-dollar-experiment" aria-label="Link to this section">#</a></h2>
+<p>Exactly one phase leaves the desk. L3 rents a single cloud GPU to train five models at 125M parameters — one size step above anything in the local grid — purely to test whether the fitted law predicted them correctly.</p>
+<p>Five runs, about 33 GPU-hours, roughly $92 at on-demand pricing and less on interruptible instances. The budget ledger enforces a $100 cap as a code constant rather than a configuration value, which means exceeding it requires editing and committing source, not fat-fingering a number.</p>
+<p>That is the entire cloud budget for the project. Everything else — every model, every ablation, every control run, the capstone — happens on hardware already sitting on a desk.</p>
+<aside class="callout callout-matters"><span class="callout-label">Why this matters</span><div class="callout-body"><p>the design forces a useful discipline. When cloud compute is effectively unlimited, the temptation is to answer every question by launching more runs. With five cloud runs total, each one has to be worth its place, which means the local grid has to be good enough that a single size step up is genuinely decisive.</p></div></aside>
+<h2 id="what-would-count-as-failure">What would count as failure<a class="anchor" href="#what-would-count-as-failure" aria-label="Link to this section">#</a></h2>
+<p>A research plan that cannot fail is not a plan. Three outcomes would count, and each is worth stating in advance.</p>
+<p><strong>The law does not extrapolate.</strong> The 125M anchors come back outside the predicted band. This is the most likely failure and the least damaging — a law that holds from 3M to 60M and bends at 125M tells you something real about where the small-scale regime ends. It would be reported as the headline result rather than hidden in a limitations section.</p>
+<p><strong>The two functional forms fit equally well and predict differently.</strong> Then the honest output is both laws, the region where they disagree, and a statement that the current data cannot separate them. The fix is more runs in the overtrained tier, which is exactly where they diverge.</p>
+<p><strong>Full precision wins everywhere per byte.</strong> If the frontier turns out monotone in bit width, the entire premise is wrong. Given what BitNet, ParetoQ and Spectra have already shown — and given the crossover already measured here — this is unlikely, but it would be publishable as a negative result: a clear account of where and why low-bit training fails to pay for itself.</p>
+<p>The one outcome that would <em>not</em> be acceptable is quietly reporting whichever framing made the numbers look best. The pre-registration protocol in <a href="14-fitting-the-law.html">Chapter 14</a> and the verification panel in <a href="12-trusting-the-numbers.html">Chapter 12</a> exist to make that difficult.</p>
+<h2 id="the-model-at-the-end">The model at the end<a class="anchor" href="#the-model-at-the-end" aria-label="Link to this section">#</a></h2>
+<p>If the law holds, the final phase spends it. The plan is to train whatever configuration the fitted law prescribes at a 64 MB body-byte budget — a size that runs comfortably on hardware people already own — and compare it against the alternatives at the same footprint: a full-precision model with proportionally fewer parameters, a larger model quantized after training to 4 bits, and a 4-bit model trained from scratch.</p>
+<p>The 4-bit post-training baseline is the one that matters. It is the strongest thing in the field's standard toolkit and represents the &quot;just quantize it&quot; answer this project is arguing against. Beating it at equal bytes is the point; losing to it would be worth reporting just as clearly, with the crossover where it starts winning stated precisely.</p>
+<p>Alongside it goes the checkpoint ladder — every model from the grid, with its configuration and results — since that ladder is arguably more useful to other researchers than any single model. It is the artifact that lets someone else fit their own law without repeating 800 GPU-hours.</p>
+<h2 id="run-it-yourself">Run it yourself<a class="anchor" href="#run-it-yourself" aria-label="Link to this section">#</a></h2>
+<p>The repository is designed to be re-run, not just read. Everything below works on a single consumer GPU.</p>
+<div class="hl"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/canivel/logos<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>logos
+uv<span class="w"> </span>venv<span class="w"> </span>--system-site-packages<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;.[dev]&quot;</span><span class="w"> </span>--no-deps
+
+python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>-q<span class="w">                  </span><span class="c1"># the unit suite</span>
+python<span class="w"> </span>-m<span class="w"> </span>validation.panel<span class="w"> </span>--all<span class="w">     </span><span class="c1"># the 49 verification gates</span>
+</pre></div>
+<p>The panel is the interesting one to run first. It re-derives the quantizers, the loss metric, the packing formats, and the fitting machinery from first principles and checks the implementation against them. If it returns ACCEPT, the stack on your machine behaves the way the results in this book assume.</p>
+<p>To reproduce a result end to end, prepare the corpus and drain a manifest:</p>
+<div class="hl"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>logos.cli<span class="w"> </span>data<span class="w"> </span>prepare<span class="w"> </span>--out<span class="w"> </span>data/fineweb_edu_10bt<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--dataset-config<span class="w"> </span>sample-10BT<span class="w"> </span>--tokenizer<span class="w"> </span>TinyLlama/TinyLlama_v1.1<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--target-tokens<span class="w"> </span><span class="m">2500000000</span>
+
+python<span class="w"> </span>scripts/run_queue.py<span class="w"> </span>--manifest<span class="w"> </span>manifests/l0.yaml<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--data-dir<span class="w"> </span>data/fineweb_edu_10bt<span class="w"> </span>--runs-dir<span class="w"> </span>runs/l0
+</pre></div>
+<p>That drains the 28-run replication tier — the one that produced the crossover figure — appending results to the same file format the analysis scripts read. A smaller taste, requiring no corpus download and about five minutes, is <code>python scripts/local_p0.py</code>, which trains the whole precision ladder on a public-domain novel and produces its own figure.</p>
+<p>Every figure in this book regenerates from committed data:</p>
+<div class="hl"><pre><span></span>python<span class="w"> </span>analysis/l0_summary.py<span class="w">        </span><span class="c1"># the crossover table and figures</span>
+python<span class="w"> </span>analysis/lr_probe_summary.py<span class="w">  </span><span class="c1"># the learning-rate analysis</span>
+python<span class="w"> </span>analysis/book_figures.py<span class="w">      </span><span class="c1"># every figure here, both themes</span>
+</pre></div>
+<h2 id="why-do-this-on-a-desk">Why do this on a desk<a class="anchor" href="#why-do-this-on-a-desk" aria-label="Link to this section">#</a></h2>
+<p>There is a version of this project that runs at a real lab: models up to a billion parameters, cloud clusters, a released model people deploy. The plan for it exists in the repository as a reference design. It costs about $25,000 of compute.</p>
+<p>This is not that. It is the same science, shifted two orders of magnitude down the ladder — fitted at 3M to 60M parameters, validated at 125M — because that is what one desktop card and a hundred dollars can pay for.</p>
+<p>Something is genuinely lost in that shift, and the book has been explicit about it: at these sizes the embedding table distorts byte accounting, downstream benchmarks are pure noise, and extrapolating to a billion parameters would be a claim the data cannot support.</p>
+<p>But something is gained that a well-funded version could not offer. Every result here is reproducible by anyone with a gaming GPU and a weekend. The grid is not an appendix to a paper describing runs nobody can repeat — it is the whole experiment, and it fits on a laptop's worth of disk. In a period when the compute needed to do frontier work is rationed by supply chains and capital, showing that a real scaling law can be fitted, validated against a blind test, and published from a desk is not a consolation prize. It is a second argument, running alongside the first.</p>
+<p>The memory crunch that makes this research worth doing is the same one deciding who gets to do research at all. A method that needs fewer bytes to do the same work is an answer to both.</p>
+<h2 id="what-to-remember">What to remember<a class="anchor" href="#what-to-remember" aria-label="Link to this section">#</a></h2>
+<p>Two phases of six are done; the rest is roughly 700 hours of unattended local compute plus a single $100 cloud experiment whose only job is to test the fitted law against a size it never saw. Failure modes are named in advance — the law not extrapolating, the two forms staying indistinguishable, or full precision simply winning per byte — and each would be reported as a result rather than hidden. The final phase trains whatever the law prescribes at a 64 MB budget and puts it against the &quot;just quantize it&quot; baseline that represents current practice. Everything is runnable from the repository on one consumer GPU, which is not a limitation of this work so much as a second claim it is making.</p>
+
+    </article>
+    <nav class="pager">
+      <a class="pager-prev" href="14-fitting-the-law.html"><span>Previous</span>14 · Fitting the law</a>
+      <a class="pager-next" href="glossary.html"><span>Next</span>Glossary</a>
+    </nav>
+    <footer class="foot">
+      <p>Memory-optimal scaling laws for natively low-bit language models · <a href="https://github.com/canivel/logos">source and data on GitHub</a> · Apache-2.0</p>
+    </footer>
+  </main>
+</div>
+<script>
+(function () {
+  var root = document.documentElement;
+  var saved = localStorage.getItem('logos-theme');
+  if (saved) root.setAttribute('data-theme', saved);
+  function currentIsDark() {
+    var attr = root.getAttribute('data-theme');
+    if (attr) return attr === 'dark';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+  function syncFigures() {
+    var explicit = root.getAttribute('data-theme');
+    var dark = currentIsDark();
+    // A <source media="(prefers-color-scheme: dark)"> outranks the <img src>,
+    // so an explicit choice has to retarget the source too, not just the img.
+    document.querySelectorAll('figure.fig source.dark-src').forEach(function (s) {
+      s.media = explicit ? (dark ? 'all' : 'not all') : '(prefers-color-scheme: dark)';
+    });
+    document.querySelectorAll('figure.fig img').forEach(function (img) {
+      var want = dark ? img.dataset.dark : img.dataset.light;
+      if (want && img.getAttribute('src') !== want) img.setAttribute('src', want);
+    });
+  }
+  var btn = document.querySelector('.theme-toggle');
+  if (btn) btn.addEventListener('click', function () {
+    var next = currentIsDark() ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    localStorage.setItem('logos-theme', next);
+    syncFigures();
+  });
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', syncFigures);
+  syncFigures();
+  var navBtn = document.querySelector('.nav-toggle');
+  if (navBtn) navBtn.addEventListener('click', function () {
+    document.querySelector('.sidebar').classList.toggle('open');
+  });
+})();
+</script>
+</body>
+</html>

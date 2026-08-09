@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en" data-theme-pref="system">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Glossary — LOGOS</title>
+<meta name="description" content="Every term the book defines, in one place. Chapter references point to where the idea is developed properly.">
+<meta property="og:title" content="Glossary — LOGOS">
+<meta property="og:description" content="Every term the book defines, in one place. Chapter references point to where the idea is developed properly.">
+<meta property="og:type" content="article">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>▚</text></svg>">
+<link rel="stylesheet" href="assets/book.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="topbar">
+  <a class="brand" href="index.html"><span class="brand-mark">▚</span> LOGOS</a>
+  <div class="topbar-right">
+    <a class="topbar-link" href="https://github.com/canivel/logos">Repository</a>
+    <button class="theme-toggle" type="button" aria-label="Switch colour theme">◐</button>
+    <button class="nav-toggle" type="button" aria-label="Open chapter list">☰</button>
+  </div>
+</header>
+<div class="shell">
+  <nav class="sidebar" aria-label="Chapters">
+    
+      
+      <ul class="nav-list">
+      
+        <li><a href="index.html" >Start here</a></li>
+      
+      </ul>
+    
+      <div class="nav-part">Part I — Why this exists</div>
+      <ul class="nav-list">
+      
+        <li><a href="01-the-memory-wall.html" >1 · The memory wall</a></li>
+      
+        <li><a href="02-what-a-language-model-is.html" >2 · What a language model is</a></li>
+      
+        <li><a href="03-measuring-quality.html" >3 · Measuring quality</a></li>
+      
+      </ul>
+    
+      <div class="nav-part">Part II — The toolkit</div>
+      <ul class="nav-list">
+      
+        <li><a href="04-scaling-laws.html" >4 · Scaling laws</a></li>
+      
+        <li><a href="05-numbers-in-a-computer.html" >5 · Numbers in a computer</a></li>
+      
+        <li><a href="06-quantization.html" >6 · Quantization</a></li>
+      
+        <li><a href="07-training-in-low-precision.html" >7 · Training in low precision</a></li>
+      
+        <li><a href="08-the-kv-cache.html" >8 · The KV cache</a></li>
+      
+      </ul>
+    
+      <div class="nav-part">Part III — The research</div>
+      <ul class="nav-list">
+      
+        <li><a href="09-the-question.html" >9 · The question</a></li>
+      
+        <li><a href="10-designing-a-clean-experiment.html" >10 · Designing a clean experiment</a></li>
+      
+        <li><a href="11-building-the-machine.html" >11 · Building the machine</a></li>
+      
+        <li><a href="12-trusting-the-numbers.html" >12 · Trusting the numbers</a></li>
+      
+      </ul>
+    
+      <div class="nav-part">Part IV — Results & what's next</div>
+      <ul class="nav-list">
+      
+        <li><a href="13-what-we-found.html" >13 · What we found so far</a></li>
+      
+        <li><a href="14-fitting-the-law.html" >14 · Fitting the law</a></li>
+      
+        <li><a href="15-the-road-ahead.html" >15 · The road ahead</a></li>
+      
+      </ul>
+    
+      <div class="nav-part">Reference</div>
+      <ul class="nav-list">
+      
+        <li><a href="glossary.html" class="current" aria-current="page">Glossary</a></li>
+      
+      </ul>
+    
+  </nav>
+  <main id="main">
+    
+    <details class="toc">
+      <summary>On this page</summary>
+      <ul><li class="toc-l2"><a href="#models-and-training">Models and training</a></li><li class="toc-l2"><a href="#measuring-quality">Measuring quality</a></li><li class="toc-l2"><a href="#numbers-and-precision">Numbers and precision</a></li><li class="toc-l2"><a href="#quantization-approaches">Quantization approaches</a></li><li class="toc-l2"><a href="#scaling-laws">Scaling laws</a></li><li class="toc-l2"><a href="#method-and-verification">Method and verification</a></li></ul>
+    </details>
+    
+    <article class="prose">
+      <h1 id="glossary">Glossary<a class="anchor" href="#glossary" aria-label="Link to this section">#</a></h1>
+<p><em>Every term the book defines, in one place. Chapter references point to where the idea is developed properly.</em></p>
+<h2 id="models-and-training">Models and training<a class="anchor" href="#models-and-training" aria-label="Link to this section">#</a></h2>
+<p><strong>Parameter</strong> — one adjustable number inside a model. Training means changing these. A model's size is usually quoted as its parameter count. (<a href="02-what-a-language-model-is.html">Chapter 2</a>)</p>
+<p><strong>Non-embedding parameters (N)</strong> — the parameters in the model's body (attention and feed-forward layers), excluding the vocabulary lookup table. This project fits its laws on N because at small scale the embedding table can outweigh everything else, which would make &quot;parameters&quot; mean different things at different sizes. (<a href="02-what-a-language-model-is.html">Chapter 2</a>)</p>
+<p><strong>Embedding table</strong> — the lookup that turns each of the 32,768 vocabulary entries into a vector. Stays 16-bit in every arm of this project, and dominates the byte count of a small artifact. (<a href="05-numbers-in-a-computer.html">Chapter 5</a>)</p>
+<p><strong>Token</strong> — the unit a model reads: a word, word fragment, or character, mapped to an integer. (<a href="02-what-a-language-model-is.html">Chapter 2</a>)</p>
+<p><strong>D</strong> — the number of tokens a model is trained on.</p>
+<p><strong>Tokens per parameter (D/N)</strong> — the &quot;how much training&quot; axis. About 20× is compute-optimal; deployed models are usually trained far past it, because training cost is paid once and inference cost is paid forever. This project measures 20×, 80×, and 320×. (<a href="02-what-a-language-model-is.html">Chapter 2</a>)</p>
+<p><strong>Overtrained</strong> — trained well past the compute-optimal point. Not a criticism; it is what everyone does, and it is the regime where this project's results change sign. (<a href="04-scaling-laws.html">Chapter 4</a>)</p>
+<p><strong>Transformer / decoder block</strong> — the repeated unit of the architecture: a normalization, an attention layer that mixes information across positions, another normalization, and a feed-forward layer that processes each position independently, each wrapped in a residual connection. (<a href="02-what-a-language-model-is.html">Chapter 2</a>)</p>
+<p><strong>Attention</strong> — the mechanism letting each position draw on earlier positions, weighted by relevance. (<a href="02-what-a-language-model-is.html">Chapter 2</a>, <a href="08-the-kv-cache.html">Chapter 8</a>)</p>
+<p><strong>Grouped-query attention (GQA)</strong> — several query heads sharing one key/value head, cutting cache size. This project uses a 4:1 ratio. (<a href="08-the-kv-cache.html">Chapter 8</a>)</p>
+<p><strong>KV cache</strong> — the stored keys and values from earlier positions, kept so generation does not recompute them every step. Grows linearly with context length and with concurrent users, and can exceed the model's own weights. (<a href="08-the-kv-cache.html">Chapter 8</a>)</p>
+<p><strong>Seed</strong> — the number initializing a run's randomness. Same configuration, different seed, different result — which is why noise must be measured. (<a href="03-measuring-quality.html">Chapter 3</a>)</p>
+<h2 id="measuring-quality">Measuring quality<a class="anchor" href="#measuring-quality" aria-label="Link to this section">#</a></h2>
+<p><strong>Cross-entropy loss</strong> — the model's surprise at the correct next token, in nats. Lower is better. (<a href="03-measuring-quality.html">Chapter 3</a>)</p>
+<p><strong>Bits per byte (BPB)</strong> — total loss in bits divided by the number of UTF-8 bytes of the original text. The project's primary metric, because it is tokenizer-independent and therefore comparable across models and papers. (<a href="03-measuring-quality.html">Chapter 3</a>)</p>
+<p><strong>Perplexity</strong> — the exponential of the loss. Intuitive, but tokenizer-dependent, so not used here as the fitting target. (<a href="03-measuring-quality.html">Chapter 3</a>)</p>
+<p><strong>Seed sigma (σ)</strong> — the standard deviation of a metric across runs differing only in random seed. Measured at 0.006 to 0.066 BPB at 3M–6M parameters. (<a href="03-measuring-quality.html">Chapter 3</a>)</p>
+<p><strong>The 2σ rule</strong> — no quality gap is claimed unless it exceeds twice the relevant seed sigma. For two single-seed runs the bar widens by a factor of √2. Roughly a third of measured cells fall inside their own noise and are reported as &quot;no claim&quot;. (<a href="03-measuring-quality.html">Chapter 3</a>, <a href="10-designing-a-clean-experiment.html">Chapter 10</a>)</p>
+<p><strong>Held-out set</strong> — text kept out of training, used to measure quality. This project uses two disjoint ones. (<a href="03-measuring-quality.html">Chapter 3</a>)</p>
+<h2 id="numbers-and-precision">Numbers and precision<a class="anchor" href="#numbers-and-precision" aria-label="Link to this section">#</a></h2>
+<p><strong>Bit / byte</strong> — one binary digit; eight of them. A model's footprint is parameters × bits ÷ 8, plus overheads. (<a href="05-numbers-in-a-computer.html">Chapter 5</a>)</p>
+<p><strong>bf16</strong> — 16-bit &quot;brain float&quot;, the standard training format: fp32's exponent range with fewer mantissa bits. The full-precision baseline here. (<a href="05-numbers-in-a-computer.html">Chapter 5</a>)</p>
+<p><strong>Scale factor</strong> — the real number a stored integer is multiplied by to reconstruct an approximate weight. The core trick of all quantization. (<a href="05-numbers-in-a-computer.html">Chapter 5</a>)</p>
+<p><strong>Ternary / 1.58-bit</strong> — weights restricted to −1, 0, +1 with one shared scale. Three states carry log2(3) ≈ 1.58 bits of information; practical formats pack them at 2 bits each. The project's suite is named TRIT after this. (<a href="05-numbers-in-a-computer.html">Chapter 5</a>, <a href="07-training-in-low-precision.html">Chapter 7</a>)</p>
+<p><strong>Per-group quantization</strong> — one scale per group of weights (128 here) rather than one per tensor, so a few extreme values cannot waste the whole integer range. (<a href="06-quantization.html">Chapter 6</a>)</p>
+<p><strong>Outliers</strong> — the small number of weights or activation channels far larger than the rest. The main technical reason naive quantization fails. (<a href="06-quantization.html">Chapter 6</a>)</p>
+<p><strong>W×A8</strong> — k-bit weights with 8-bit activations, the configuration used on every low-bit arm here. (<a href="06-quantization.html">Chapter 6</a>, <a href="07-training-in-low-precision.html">Chapter 7</a>)</p>
+<p><strong>Packed format</strong> — the on-disk layout of quantized weights. This project measures real packed bytes rather than deriving them, since scales and 16-bit tensors are real storage. (<a href="05-numbers-in-a-computer.html">Chapter 5</a>)</p>
+<h2 id="quantization-approaches">Quantization approaches<a class="anchor" href="#quantization-approaches" aria-label="Link to this section">#</a></h2>
+<p><strong>Quantization</strong> — representing weights or activations with fewer bits. (<a href="06-quantization.html">Chapter 6</a>)</p>
+<p><strong>Post-training quantization (PTQ)</strong> — train at full precision, then convert. Cheap, ubiquitous, holds up to about 4 bits, degrades sharply below. The practice this project argues is a patch rather than a solution. (<a href="06-quantization.html">Chapter 6</a>)</p>
+<p><strong>Quantization-aware training (QAT)</strong> — train with quantization in the loop so the model adapts to it. (<a href="07-training-in-low-precision.html">Chapter 7</a>)</p>
+<p><strong>Native low-bit / from scratch</strong> — QAT applied from the first step rather than as a fine-tune. What this project studies. (<a href="07-training-in-low-precision.html">Chapter 7</a>)</p>
+<p><strong>Fake quantization</strong> — during training, keep a full-precision master weight, quantize it on each forward pass, and update the master. The deployed model keeps only the quantized values. (<a href="07-training-in-low-precision.html">Chapter 7</a>)</p>
+<p><strong>Master weight</strong> — the full-precision copy that accumulates updates too small to survive rounding. (<a href="07-training-in-low-precision.html">Chapter 7</a>)</p>
+<p><strong>Straight-through estimator (STE)</strong> — pretending, for the backward pass only, that rounding was the identity function, so gradients flow. Without it, rounding's zero derivative would stop learning entirely. (<a href="07-training-in-low-precision.html">Chapter 7</a>)</p>
+<p><strong>Absmean scaling</strong> — BitNet's ternary rule: divide by the mean absolute weight, round and clip to {−1, 0, +1}, multiply back. (<a href="07-training-in-low-precision.html">Chapter 7</a>)</p>
+<p><strong>Learned scale (LSQ)</strong> — a quantization scale trained by gradient descent rather than computed from statistics. Used on the 2/3/4-bit arms. (<a href="07-training-in-low-precision.html">Chapter 7</a>)</p>
+<p><strong>subln</strong> — an extra normalization before the output projections, added on quantized arms for stability. (<a href="07-training-in-low-precision.html">Chapter 7</a>)</p>
+<h2 id="scaling-laws">Scaling laws<a class="anchor" href="#scaling-laws" aria-label="Link to this section">#</a></h2>
+<p><strong>Power law</strong> — a relationship where each doubling of the input buys a fixed improvement; a straight line on log-log axes. (<a href="04-scaling-laws.html">Chapter 4</a>)</p>
+<p><strong>Chinchilla</strong> — the 2022 result establishing compute-optimal training as roughly 20 tokens per parameter. Answers how to spend a <em>training</em> budget, not a memory budget. (<a href="04-scaling-laws.html">Chapter 4</a>)</p>
+<p><strong>Compute-optimal</strong> — the split of a fixed training budget between model size and data that minimizes loss. (<a href="04-scaling-laws.html">Chapter 4</a>)</p>
+<p><strong>Irreducible loss (E)</strong> — the floor no model beats, set by the inherent unpredictability of the text. (<a href="04-scaling-laws.html">Chapter 4</a>)</p>
+<p><strong>Effective capacity f(b)</strong> — how much of a full-precision parameter's usefulness a b-bit parameter retains, with f(16) = 1. The central unknown of the fitted law. (<a href="09-the-question.html">Chapter 9</a>, <a href="14-fitting-the-law.html">Chapter 14</a>)</p>
+<p><strong>Iso-memory frontier</strong> — for each byte budget, the best achievable loss at each bit width. The project's headline figure; where the curves cross is the practical answer. (<a href="09-the-question.html">Chapter 9</a>)</p>
+<p><strong>b*(M, D) phase diagram</strong> — a map whose colour at each (budget, training-duration) point is the winning bit width. Regions of one colour are regimes; the boundaries are crossovers. (<a href="09-the-question.html">Chapter 9</a>)</p>
+<p><strong>Crossover</strong> — the point where the ranking of two options reverses. The project's first real result is that a ternary-versus-full-precision crossover exists along the training-duration axis. (<a href="13-what-we-found.html">Chapter 13</a>)</p>
+<h2 id="method-and-verification">Method and verification<a class="anchor" href="#method-and-verification" aria-label="Link to this section">#</a></h2>
+<p><strong>Arm</strong> — one precision configuration in an otherwise identical experiment. (<a href="10-designing-a-clean-experiment.html">Chapter 10</a>)</p>
+<p><strong>Manifest</strong> — a versioned file specifying every run before it launches, so nothing is started by hand twice. (<a href="11-building-the-machine.html">Chapter 11</a>)</p>
+<p><strong>Config hash</strong> — a fingerprint of a run's science-bearing settings, recorded with its result so any number traces back to the configuration that produced it. Cost estimates and labels are deliberately excluded. (<a href="11-building-the-machine.html">Chapter 11</a>)</p>
+<p><strong>Confound</strong> — a second thing that changed alongside the one you meant to change, making the result ambiguous. The learning-rate confound is this project's worked example. (<a href="10-designing-a-clean-experiment.html">Chapter 10</a>)</p>
+<p><strong>Control arm</strong> — a run added specifically to rule out an alternative explanation. Twelve of them established that the crossover is a precision effect, not a learning-rate effect. (<a href="13-what-we-found.html">Chapter 13</a>)</p>
+<p><strong>Leave-one-size-out</strong> — fitting on all model sizes but one and measuring the error on the one held out. How competing functional forms are chosen, since in-sample fit always favours the form with more free parameters. (<a href="14-fitting-the-law.html">Chapter 14</a>)</p>
+<p><strong>Bootstrap</strong> — resampling runs with replacement and refitting many times to get confidence intervals on every fitted quantity. (<a href="14-fitting-the-law.html">Chapter 14</a>)</p>
+<p><strong>Huber loss</strong> — a fitting objective that behaves like squared error for small residuals and linear for large ones, so a single bad run cannot dominate. (<a href="14-fitting-the-law.html">Chapter 14</a>)</p>
+<p><strong>Pre-registration</strong> — committing predictions, with a timestamp, before running the experiment that tests them. (<a href="14-fitting-the-law.html">Chapter 14</a>)</p>
+<p><strong>Blind extrapolation</strong> — the credibility test: freeze the law, publish predictions, then train the validation models and compare. (<a href="14-fitting-the-law.html">Chapter 14</a>)</p>
+<p><strong>Validation panel</strong> — 11 independent probes with 49 pre-registered, hash-locked kill gates that re-derive every load-bearing quantity from first principles. Run with <code>logos-validate --all</code>. (<a href="12-trusting-the-numbers.html">Chapter 12</a>)</p>
+<p><strong>Kill gate</strong> — a pass/fail criterion declared and hashed before results are examined. Editing one after the fact voids the probe rather than passing it. (<a href="12-trusting-the-numbers.html">Chapter 12</a>)</p>
+
+    </article>
+    <nav class="pager">
+      <a class="pager-prev" href="15-the-road-ahead.html"><span>Previous</span>15 · The road ahead</a>
+      
+    </nav>
+    <footer class="foot">
+      <p>Memory-optimal scaling laws for natively low-bit language models · <a href="https://github.com/canivel/logos">source and data on GitHub</a> · Apache-2.0</p>
+    </footer>
+  </main>
+</div>
+<script>
+(function () {
+  var root = document.documentElement;
+  var saved = localStorage.getItem('logos-theme');
+  if (saved) root.setAttribute('data-theme', saved);
+  function currentIsDark() {
+    var attr = root.getAttribute('data-theme');
+    if (attr) return attr === 'dark';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+  function syncFigures() {
+    var explicit = root.getAttribute('data-theme');
+    var dark = currentIsDark();
+    // A <source media="(prefers-color-scheme: dark)"> outranks the <img src>,
+    // so an explicit choice has to retarget the source too, not just the img.
+    document.querySelectorAll('figure.fig source.dark-src').forEach(function (s) {
+      s.media = explicit ? (dark ? 'all' : 'not all') : '(prefers-color-scheme: dark)';
+    });
+    document.querySelectorAll('figure.fig img').forEach(function (img) {
+      var want = dark ? img.dataset.dark : img.dataset.light;
+      if (want && img.getAttribute('src') !== want) img.setAttribute('src', want);
+    });
+  }
+  var btn = document.querySelector('.theme-toggle');
+  if (btn) btn.addEventListener('click', function () {
+    var next = currentIsDark() ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    localStorage.setItem('logos-theme', next);
+    syncFigures();
+  });
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', syncFigures);
+  syncFigures();
+  var navBtn = document.querySelector('.nav-toggle');
+  if (navBtn) navBtn.addEventListener('click', function () {
+    document.querySelector('.sidebar').classList.toggle('open');
+  });
+})();
+</script>
+</body>
+</html>
