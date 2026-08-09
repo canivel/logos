@@ -14,15 +14,11 @@ Now look at round(x). For any x between 0.5 and 1.5 it returns exactly 1.0, so m
 
 > **In plain terms:** rounding is a staircase and gradient descent is a ball rolling downhill. On a staircase every point is flat, so the ball never learns which way is down.
 
-![The rounding step function and its derivative](figures/ste.png)
-
-*Figure 7.1 — round(x) is a staircase, constant between half-integers; its true derivative is zero wherever it exists, which is why backpropagation through it produces nothing; the straight-through substitute pretends the staircase was the diagonal y = x and passes gradient through with value 1.*
+![The rounding step function, its true derivative, and the straight-through substitute. round(x) is a staircase, constant between half-integers; its true derivative is zero wherever it exists, which is why backpropagation through it produces nothing; the substitute pretends the staircase was the diagonal y = x and passes gradient through with value 1.](figures/ste.png)
 
 ## Fake quantization: keep a full-precision master
 
-The first half of the solution is to refuse to throw the precision away during training.
-
-Every quantized layer keeps a **master weight**: an ordinary full-precision tensor that the optimizer owns and updates. On each forward pass the layer quantizes a *copy*, multiplies with the coarse copy, and leaves the master untouched, so the update lands on the master. This is **fake quantization** — the arithmetic is genuinely coarse, the storage behind it is not.
+The first half of the solution is to refuse to throw the precision away during training. Every quantized layer keeps a **master weight**: an ordinary full-precision tensor that the optimizer owns and updates. On each forward pass the layer quantizes a *copy*, multiplies with the coarse copy, and leaves the master untouched, so the update lands on the master. This is **fake quantization** — the arithmetic is genuinely coarse, the storage behind it is not.
 
 Why keep the master? Because the updates are tiny. One step at a learning rate near 3e-3 moves a weight by roughly a thousandth of its own size, and rounding after every step erases that thousandth every time, freezing the weight on whichever level it started on. The master is an accumulator: it collects thousands of sub-threshold nudges until their sum pushes the weight across a rounding boundary, at which point the quantized value flips.
 
@@ -43,7 +39,7 @@ def ste_round(x):
 
 The trick is `.detach()`, which tells autodiff to treat a tensor as a constant: its value participates in the arithmetic, no gradient flows back through it.
 
-**Forward:** detach changes no values, so the expression is x + (round(x) − x) = round(x). The x terms cancel and the layer gets the rounded number. **Backward:** the bracketed term is a constant with derivative zero, so what remains is the derivative of the leading x, which is 1. One expression that evaluates like the staircase and differentiates like the diagonal, which is Figure 7.1's bottom panel made concrete.
+**Forward:** detach changes no values, so the expression is x + (round(x) − x) = round(x). The x terms cancel and the layer gets the rounded number. **Backward:** the bracketed term is a constant with derivative zero, so what remains is the derivative of the leading x, which is 1. One expression that evaluates like the staircase and differentiates like the diagonal — the bottom panel of the figure above, made concrete.
 
 Ternary weights use a stronger version, `ste_round_clip`, which clamps to the representable interval before rounding and does *not* detach the clamp, so the gradient is 1 inside the interval and 0 outside. That zero is correct rather than a defect: a scaled weight already pinned at the top level cannot change the output by moving further out, so pressure on it would only inflate a master that can never walk back.
 
@@ -63,13 +59,13 @@ That −0.88 became −0.38 is an enormous error on the largest weight in the ro
 
 Three values carry log2(3) = 1.585 bits each, in the sense that a long string of independent trits could in principle be compressed to about 1.58 bits per symbol. One trit is one base-3 digit, which is where the project's TRIT suite gets its name. But hardware does not read fractional bits: the packed format gives each weight a 2-bit field, four weights per byte, wasting the fourth code, so a deployed ternary model sits nearer 2 bits per weight than 1.58 — which is why LOGOS *measures* packed artifact sizes rather than deriving them from nominal width. What the layer stores is one small integer per weight plus a single shared scale for the whole matrix.
 
-![Weight distribution and representable levels per format](figures/quant-levels.png)
+The figure from [Chapter 6](06-quantization.md) is worth a second look with the ternary scheme in mind: three ticks for an entire distribution, and everything between them collapsing onto the nearer one.
 
-*Figure 7.2 — A bell-shaped weight distribution with the values each format can store drawn beneath it. bf16 is effectively continuous at this scale; 4-bit offers 16 levels, 3-bit 8, 2-bit 4, ternary 3. Everything between two ticks collapses onto the nearer tick.*
+![A real trained weight distribution with the discrete reconstruction levels available to bf16, 4-bit, 2-bit and ternary formats overlaid. The bf16 grid looks continuous at this scale; the low-bit grids show how few distinct values the whole distribution must collapse onto.](figures/quant-levels.png)
 
 ## The 2/3/4-bit ladder: learned scales, one per group
 
-The middle rungs live in `src/logos/quant/paretoq.py`, following the ParetoQ line of work. Same STE, different bookkeeping. The levels are symmetric signed integers, what a k-bit two's-complement number gives: 4-bit spans −8 to 7, 3-bit spans −4 to 3, 2-bit spans −2 to 1. Note that 2-bit gets four levels where ternary gets three, inside the same packed 2 bits per weight.
+The middle rungs live in `src/logos/quant/paretoq.py`, following the ParetoQ line of work: same STE, different bookkeeping. The levels are symmetric signed integers, what a k-bit two's-complement number gives — 4-bit spans −8 to 7, 3-bit −4 to 3, 2-bit −2 to 1. Note that 2-bit gets four levels where ternary gets three, inside the same packed 2 bits per weight.
 
 ### The scale is learned, not computed
 
@@ -97,7 +93,7 @@ The BitNet fix, which LOGOS adopts, is **sub-layer normalization**, or **subln**
 
 That conditional is where a careful reader should get uncomfortable, and an external reviewer of this project did. The stated design principle is that precision is the only thing varying between arms, but switching from bf16 to a quantized arm changes three things at once: weights become low-bit, activations become int8, and two normalization layers appear.
 
-So when a quantized arm wins, the result is real but its *attribution* is ambiguous. Maybe low-bit weights help, maybe int8 activations regularize, maybe the norms do the work. Measuring the bundle is legitimate, since the bundle is what gets deployed, but it is not measuring precision. The planned answer is a **W4A16 control**, 4-bit weights with full-precision activations. It has not been run.
+So when a quantized arm wins, the result is real but its *attribution* is ambiguous — maybe low-bit weights help, maybe int8 activations regularize, maybe the norms do the work. Measuring the bundle is legitimate, since the bundle is what gets deployed, but it is not measuring precision. The planned answer is a **W4A16 control**, 4-bit weights with full-precision activations. It has not been run.
 
 ## The learning-rate finding
 
