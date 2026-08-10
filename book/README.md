@@ -21,10 +21,14 @@ blocks stays hand-written, because no script can decide what a result means
 or whether it clears the noise bar.
 
 ```markdown
-<!-- AUTO:l0-gap-table -->
-...rewritten by book_sync...
-<!-- /AUTO:l0-gap-table -->
+<!-- AUTO:NAME -->
+...rewritten by book_sync on every run...
+<!-- /AUTO:NAME -->
 ```
+
+Marker names are lower-case; `NAME` above is a placeholder precisely so this
+example is not itself treated as a live block. (It was, once. The sync
+happily filled this README with a gap table.)
 
 A marker with no generator, or a generator with no marker, is a hard error —
 so a block cannot silently stop being maintained. Markers are stripped at

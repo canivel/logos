@@ -104,12 +104,15 @@ The same five configurations, trained four times as long, are filling in now:
 | Arm | Validation BPB | vs bf16 |
 |-----|---------------:|--------:|
 | bf16 | 1.1766 | — |
+| 2-bit | 1.2832 | +0.107 |
 | ternary | 1.3242 | +0.148 |
 <!-- /AUTO:ladder-12m-80x -->
 
 Ternary, which was 0.078 *ahead* of full precision at 20 tokens per parameter, is 0.148 behind it at 80×. The sign change that appeared at 3M and again at 6M reproduces at 12M — the third size in a row, and the clearest statement so far that the answer to "which precision should I use?" is not a constant but a function of how long you train.
 
-What the remaining arms will settle is more interesting than the ternary result itself. If 2-bit, 3-bit and 4-bit all cross at the same point, precision affects only *how much* you lose, and the crossover is a property of low-bit training in general. If they cross in bit order — coarser precisions flipping first, finer ones holding out longer — then the crossover *location* depends on bit width, and the fitted law has a genuine surface to reproduce rather than a single boundary. [Chapter 14](14-fitting-the-law.md) explains why the two candidate functional forms make different predictions here.
+The second arm to land is 2-bit, at 0.107 behind. That ordering — ternary losing more than 2-bit — is the first hint of something the remaining arms will settle. If 3-bit and 4-bit come in with progressively smaller deficits, the loss from overtraining is graded by bit width, and the *location* of each precision's crossover differs; the fitted law then has a genuine surface to reproduce rather than a single boundary. If instead the remaining arms bunch together, precision governs only how much you lose and not when you start losing. [Chapter 14](14-fitting-the-law.md) explains why the two candidate functional forms make different predictions here.
+
+One caution about reading that ordering too eagerly: these are single-seed runs, and the ternary-to-2-bit difference of 0.041 is smaller than the noise bar measured at the size below. The trend is worth watching, not citing.
 
 ### What has actually been measured
 
@@ -120,7 +123,7 @@ Because this chapter is written while the grid is still running, here is the hon
 |------|-----|-----|------|
 | 3M | 2 arms | 2 arms | 2 arms |
 | 6M | 2 arms | 2 arms | 2 arms |
-| 12M | 5 arms | 2 arms | — |
+| 12M | 5 arms | 3 arms | — |
 <!-- /AUTO:coverage -->
 
 ## What the data cannot yet say

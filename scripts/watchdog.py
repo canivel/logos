@@ -37,9 +37,22 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def newest_progress(runs_dir: Path) -> tuple[float, Path | None]:
-    """(mtime, path) of the most recently written metrics file."""
+    """(mtime, path) of the most recent sign of forward progress.
+
+    Not just metrics.jsonl. After the last training step the queue spends
+    minutes in evaluation — bits-per-byte over two held-out sets, artifact
+    export, parity check — and writes no metrics at all during it. Watching
+    metrics alone would count that healthy stretch as a stall, kill the run,
+    and then do it again on every restart, because a resumed finished run
+    goes straight back into evaluation. So status.json (written when a run
+    completes) and the results file (written when its evaluation lands) both
+    count as progress.
+    """
     best_t, best_p = 0.0, None
-    for m in runs_dir.rglob("metrics.jsonl"):
+    candidates = list(runs_dir.rglob("metrics.jsonl"))
+    candidates += list(runs_dir.rglob("status.json"))
+    candidates.append(ROOT / "results" / "results.jsonl")
+    for m in candidates:
         try:
             t = m.stat().st_mtime
         except OSError:
@@ -90,7 +103,10 @@ def main() -> int:
     ap.add_argument("--queue", action="append", required=True,
                     help="manifest:data_dir:runs_dir (repeatable, in order)")
     ap.add_argument("--micro-batch-seqs", type=int, default=4)
-    ap.add_argument("--stall-minutes", type=float, default=25.0)
+    # 45 min: comfortably longer than the slowest evaluation expected in the
+    # grid (a 60M model scoring two ~24M-token held-out sets), while still
+    # catching a hang well inside one checkpoint interval's worth of lost work.
+    ap.add_argument("--stall-minutes", type=float, default=45.0)
     ap.add_argument("--poll-seconds", type=int, default=180)
     ap.add_argument("--max-restarts", type=int, default=12)
     args = ap.parse_args()
