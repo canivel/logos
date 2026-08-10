@@ -94,6 +94,39 @@ whether they all cross together or in bit order — the latter would be the
 first direct evidence for a precision-dependent crossover location, which
 is what the fitted law has to reproduce.
 
+## Operational note — a silent VRAM-spill hang, and the watchdog it bought
+
+**2026-08-09, run `l-12m-1.58-tp80-s0`.** Training stopped advancing at step
+~2040 with no exception, no exit code, and no error-log entry. External
+signals all read healthy or better: GPU utilisation 100%, one CPU core
+saturated, temperature 63°C, clocks at 1950 MHz, no thermal throttling.
+Metrics had not been written for 45 minutes.
+
+Diagnosis: VRAM at 9958/10240 MiB (97%) with the process holding a **10.5 GB
+host working set** — the Windows WDDM signature of GPU memory spilling into
+system RAM, where the driver keeps the process alive and shuttling instead
+of raising an out-of-memory error. The bf16 12m@80x arm had passed through
+the same cell earlier without trouble; the ternary arm's extra per-layer
+quantized copies pushed it over the edge.
+
+Fix: `micro_batch_seqs` 8 → 4. VRAM 9958 → 5385 MiB, step time 5.44 → 7.5 s,
+resumed from the 21:49 checkpoint losing ~80 steps. Gradient accumulation
+makes this a hardware lever with no effect on effective batch or data order
+(asserted by `test_grad_accumulation_is_science_neutral`), so the run's
+science is unchanged; the mid-run change is recorded here for provenance.
+
+Systemic fix: `scripts/watchdog.py` now owns the queue chain. It ignores
+process liveness — which was misleading here — and watches the mtime of the
+newest `metrics.jsonl`. Stale beyond 25 minutes while the child lives means
+kill the process tree (the child holds the CUDA context) and relaunch;
+30-minute checkpointing plus results-row skipping makes a restart nearly
+free. Capped at 12 restarts before it stops and waits for a human.
+
+**Lesson for the ops layer:** the Tier-1 monitor in `ops/` was built for
+preemption and divergence — failures that terminate. This one did not
+terminate. Liveness checks confirm a process exists; only progress checks
+confirm it is working.
+
 ## Provenance
 
 Manifests `l1.yaml`, `l1lrx.yaml`, `l1ctl.yaml` · results in

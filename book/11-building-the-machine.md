@@ -74,6 +74,16 @@ The random-number-generator state is also stored as a tensor. PyTorch requires i
 
 The fix is one method call: `torch.set_rng_state(state["rng"]["torch"].cpu())`. The lesson is not the fix. It is that a test which cannot reach the failing configuration provides confidence proportional to nothing at all, and that the failure lived in the *interaction* of two individually correct behaviours. Kill-and-resume is now covered by a bit-exact gate that runs on-device.
 
+### The failure that looks like success
+
+A second incident, months later, is worth telling because of how it presented. A 12M ternary run stopped making progress: no exception, no non-zero exit code, no entry in any error log. From outside, everything looked *better* than healthy — the graphics card reported 100% utilisation and the process was consuming a full CPU core. It had simply stopped, and it stayed stopped for 45 minutes before anyone looked.
+
+The cause was memory. The card has 10 GB; the run had climbed to 9.96 GB. On Windows, a process that exceeds available video memory does not fail — the driver quietly spills the excess into system RAM and carries on at a fraction of the speed. The giveaway was the process holding a 10.5 GB working set in host memory, which no model that size should need. It was not computing. It was shuttling.
+
+The fix was to halve the **micro-batch** — how many sequences go through the card at once before gradients are accumulated. Because gradient accumulation sums the same gradients in a different order, the effective batch and the data order are untouched, so this is a hardware knob and not a scientific one; there is a test asserting exactly that. Memory use dropped from 9.96 GB to 5.4 GB and the run resumed from its last checkpoint.
+
+> **Why this matters:** the queue already handled crashes — a dead process exits, and the next one starts. It had no answer for a process that stays alive and does nothing, which is the failure mode that wastes the most time precisely because nothing looks wrong. The fix was a watchdog that ignores the trainer entirely and watches the one thing that proves forward progress: the timestamp on the metrics file. If it stops advancing while the child is alive, the child gets killed and relaunched, and the checkpoint makes the restart nearly free. Monitoring liveness tells you a process exists. Only monitoring *progress* tells you it is working.
+
 ## Evaluation, export, fitting
 
 The evaluator computes bits-per-byte ([Chapter 3](03-measuring-quality.md)) over held-out shards using non-overlapping windows, scoring every token except the very first exactly once — including the final partial window — then dividing accumulated nats by the natural log of 2 and by the UTF-8 byte count the data pipeline recorded in its index. That byte count is read, never recomputed from text, so the denominator cannot drift between runs. The downstream-benchmark wrapper pins the evaluation harness to version 0.4.9 and refuses any other, because scores from different harness versions are not comparable and a silently mismatched version is worse than no score.
