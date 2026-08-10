@@ -317,6 +317,11 @@
   <td style="text-align:right">—</td>
 </tr>
 <tr>
+  <td>3-bit</td>
+  <td style="text-align:right">1.2242</td>
+  <td style="text-align:right">+0.048</td>
+</tr>
+<tr>
   <td>2-bit</td>
   <td style="text-align:right">1.2832</td>
   <td style="text-align:right">+0.107</td>
@@ -330,8 +335,9 @@
 </table>
 
 <p>Ternary, which was 0.078 <em>ahead</em> of full precision at 20 tokens per parameter, is 0.148 behind it at 80×. The sign change that appeared at 3M and again at 6M reproduces at 12M — the third size in a row, and the clearest statement so far that the answer to &quot;which precision should I use?&quot; is not a constant but a function of how long you train.</p>
-<p>The second arm to land is 2-bit, at 0.107 behind. That ordering — ternary losing more than 2-bit — is the first hint of something the remaining arms will settle. If 3-bit and 4-bit come in with progressively smaller deficits, the loss from overtraining is graded by bit width, and the <em>location</em> of each precision's crossover differs; the fitted law then has a genuine surface to reproduce rather than a single boundary. If instead the remaining arms bunch together, precision governs only how much you lose and not when you start losing. <a href="14-fitting-the-law.html">Chapter 14</a> explains why the two candidate functional forms make different predictions here.</p>
-<p>One caution about reading that ordering too eagerly: these are single-seed runs, and the ternary-to-2-bit difference of 0.041 is smaller than the noise bar measured at the size below. The trend is worth watching, not citing.</p>
+<p>The arms landing after it fall in a suggestive order. Ternary trails by 0.148, 2-bit by 0.107, 3-bit by 0.048 — each additional bit costing less, and the sequence monotone in bit width so far. If 4-bit continues it, the penalty for overtraining a low-bit model is <em>graded</em> by precision rather than uniform, which would mean each bit width has its own crossover point rather than all of them sharing one. That is a surface for the fitted law to reproduce, not a single boundary, and <a href="14-fitting-the-law.html">Chapter 14</a> explains why the two candidate functional forms disagree about its shape.</p>
+<p>Two reasons not to bank on it yet. These are single-seed runs, and the entire spread from 3-bit to ternary is 0.100 bits per byte — comparable to the 0.131 noise bar measured at the size below, so on the project's own 2σ rule not one of the individual gaps is claimable. Seeds at 12M would be needed, and they are not in the current manifest.</p>
+<p>The stronger reason for caution is that <strong>the same ordering does not appear at 20 tokens per parameter</strong>. In the undertrained row the arms rank 2-bit, 4-bit, 3-bit, ternary — not monotone in bit width at all. So either the ordering genuinely emerges only once models are trained past the point where low precision helps, which would be an interesting result about <em>when</em> precision starts to matter, or the 20× ordering is noise, or the 80× ordering is. Three single-seed rows cannot distinguish those, and pretending otherwise is exactly the failure this chapter keeps warning about.</p>
 <h3 id="what-has-actually-been-measured">What has actually been measured<a class="anchor" href="#what-has-actually-been-measured" aria-label="Link to this section">#</a></h3>
 <p>Because this chapter is written while the grid is still running, here is the honest coverage map — how many precision arms exist at each size and training duration. Empty cells are not results; they are runs that have not happened.</p>
 
@@ -360,7 +366,7 @@
 <tr>
   <td>12M</td>
   <td>5 arms</td>
-  <td>3 arms</td>
+  <td>4 arms</td>
   <td>—</td>
 </tr>
 </tbody>
