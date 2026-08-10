@@ -21,3 +21,6 @@ uv.lock
 
 # the book's figures are generated into docs/book/figures and copied to docs/figures;
 # both are committed so GitHub Pages can serve them
+
+# operational logs churn constantly and regenerate; not part of the record
+logs/
