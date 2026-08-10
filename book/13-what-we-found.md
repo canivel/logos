@@ -16,8 +16,9 @@ That run proved nothing about scaling laws. It proved the pipeline does not lie,
 
 ## The crossover, with its noise floor measured
 
-The first real experiment used 28 runs at 3M and 6M parameters on FineWeb-Edu, comparing ternary against full precision at three training durations, with three seeds at 3M and two at 6M so run-to-run noise could be measured rather than assumed.
+The first real experiment used 28 runs at 3M and 6M parameters on FineWeb-Edu, comparing ternary against full precision at three training durations, with three seeds at 3M and two at 6M so run-to-run noise could be measured rather than assumed. Later runs extend the same comparison up the ladder; the table below is regenerated from the results file every time this book is rebuilt, so it always shows every cell measured to date.
 
+<!-- AUTO:l0-gap-table -->
 | Model | Tokens/param | Ternary BPB | bf16 BPB | Gap | 2σ bar | Verdict |
 |-------|-------------:|------------:|---------:|----:|-------:|---------|
 | 3M | 20× | 2.0530 | 2.1217 | −0.0687 | 0.0409 | ternary better |
@@ -25,7 +26,10 @@ The first real experiment used 28 runs at 3M and 6M parameters on FineWeb-Edu, c
 | 3M | 320× | 1.5003 | 1.2591 | +0.2413 | 0.0611 | bf16 better |
 | 6M | 20× | 1.8718 | 1.9089 | −0.0372 | 0.1311 | inside the noise |
 | 6M | 80× | 1.4885 | 1.3210 | +0.1675 | 0.1313 | bf16 better |
-| 6M | 320× | 1.4035 | 1.1716 | +0.2319 | one seed only | bf16 better |
+| 6M | 320× | 1.4035 | 1.1716 | +0.2319 | one seed only | bf16 better (unbarred) |
+| 12M | 20× | 1.5201 | 1.5982 | −0.0781 | one seed only | ternary better (unbarred) |
+| 12M | 80× | 1.3242 | 1.1766 | +0.1476 | one seed only | bf16 better (unbarred) |
+<!-- /AUTO:l0-gap-table -->
 
 Read the 3M row as a story in three acts. Undertrained, ternary wins by more than twice the noise bar. Around 80 tokens per parameter the two are indistinguishable and the honest answer is "we cannot tell". By 320× full precision wins by four times the bar.
 
@@ -35,7 +39,11 @@ Two further observations, both of which the fitted law will have to reproduce:
 
 The deficit **grows without saturating**. From 20× to 320× at 3M, the ternary gap moves −0.069 → +0.018 → +0.241, monotonically, with no sign of flattening. This is the shape reported for post-training quantization by Ouyang and colleagues, now observed for models trained low-bit from scratch.
 
-The deficit **grows with model size at fixed training duration**. At 80 tokens per parameter, ternary trails by 0.018 at 3M and by 0.168 at 6M. That interaction between size and training duration is exactly where the two candidate functional forms in [Chapter 14](14-fitting-the-law.md) disagree, which means the fit will have something real to bite on rather than two equally good answers.
+The deficit also **changes with model size at fixed training duration**, though how is not yet settled. At 80 tokens per parameter, ternary trails by 0.018 at 3M, 0.168 at 6M, and 0.148 at 12M. The jump from 3M to 6M is larger than the noise bar and is real. The step from 6M to 12M goes the other way, but by 0.020 — well inside the 0.131 bar of the 6M cell — so it is not a decline, and it is not a continued rise either. The honest reading is that the deficit grows sharply somewhere below 6M and is flat within noise from there to 12M, and that resolving it needs more seeds at the larger sizes.
+
+> **Worth knowing:** an earlier draft of this chapter said the deficit "grows with model size", which was true of the two sizes that existed at the time. The 12M point arrived and did not continue the trend. Nothing was wrong with the measurement; the claim had simply been extrapolated from two points, which is one point too few to see a shape. It is recorded here rather than quietly edited because this is the ordinary way a premature claim dies.
+
+Whichever way it resolves, an interaction between size and training duration is exactly where the two candidate functional forms in [Chapter 14](14-fitting-the-law.md) disagree — so the fit will have something real to bite on rather than two equally good answers.
 
 ## It is a precision effect, not a learning-rate artifact
 
@@ -70,10 +78,11 @@ The same probes also produced a warning about method, which [Chapter 10](10-desi
 
 ## At 12M parameters, every low-bit arm beats full precision
 
-The first cell of the wider grid puts all five precisions head to head at 12M parameters and 20 tokens per parameter.
+The wider grid puts all five precisions head to head at 12M parameters. Undertrained, at 20 tokens per parameter:
 
 ![All five precisions at 12M parameters and 20 tokens per parameter. Every quantized arm lands below full precision.](figures/ladder-12m.png)
 
+<!-- AUTO:ladder-12m-20x -->
 | Arm | Validation BPB | vs bf16 |
 |-----|---------------:|--------:|
 | 2-bit | 1.4945 | −0.104 |
@@ -81,10 +90,38 @@ The first cell of the wider grid puts all five precisions head to head at 12M pa
 | 3-bit | 1.5153 | −0.083 |
 | ternary | 1.5201 | −0.078 |
 | bf16 | 1.5982 | — |
+<!-- /AUTO:ladder-12m-20x -->
 
 Every quantized arm beats full precision, by margins of 0.078 to 0.104 bits per byte. The crossover seen for ternary at 3M and 6M is not a ternary quirk — it is a property of low-bit training in the undertrained regime, visible across the ladder.
 
 The ordering *among* the quantized arms is a different matter. These are single-seed runs, and the spread from best to worst quantized arm is 0.026 bits per byte — far inside the noise bar for a single seed at this size. So: no claim. 2-bit is not "the best precision at 12M" on this evidence, and treating that ordering as a finding would be exactly the error the 2σ rule exists to prevent.
+
+### And by 80 tokens per parameter it has flipped
+
+The same five configurations, trained four times as long, are filling in now:
+
+<!-- AUTO:ladder-12m-80x -->
+| Arm | Validation BPB | vs bf16 |
+|-----|---------------:|--------:|
+| bf16 | 1.1766 | — |
+| ternary | 1.3242 | +0.148 |
+<!-- /AUTO:ladder-12m-80x -->
+
+Ternary, which was 0.078 *ahead* of full precision at 20 tokens per parameter, is 0.148 behind it at 80×. The sign change that appeared at 3M and again at 6M reproduces at 12M — the third size in a row, and the clearest statement so far that the answer to "which precision should I use?" is not a constant but a function of how long you train.
+
+What the remaining arms will settle is more interesting than the ternary result itself. If 2-bit, 3-bit and 4-bit all cross at the same point, precision affects only *how much* you lose, and the crossover is a property of low-bit training in general. If they cross in bit order — coarser precisions flipping first, finer ones holding out longer — then the crossover *location* depends on bit width, and the fitted law has a genuine surface to reproduce rather than a single boundary. [Chapter 14](14-fitting-the-law.md) explains why the two candidate functional forms make different predictions here.
+
+### What has actually been measured
+
+Because this chapter is written while the grid is still running, here is the honest coverage map — how many precision arms exist at each size and training duration. Empty cells are not results; they are runs that have not happened.
+
+<!-- AUTO:coverage -->
+| Size | 20× | 80× | 320× |
+|------|-----|-----|------|
+| 3M | 2 arms | 2 arms | 2 arms |
+| 6M | 2 arms | 2 arms | 2 arms |
+| 12M | 5 arms | 2 arms | — |
+<!-- /AUTO:coverage -->
 
 ## What the data cannot yet say
 

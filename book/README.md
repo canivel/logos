@@ -8,6 +8,31 @@ GitHub. `build.py` renders them into the static site GitHub Pages serves from
 [`docs/`](../docs/).
 
 ```bash
+python analysis/book_sync.py      # the one command: refresh numbers, figures, site
+python analysis/book_sync.py --check   # report drift without touching anything
+```
+
+`book_sync.py` is what keeps the book honest while the grid is still running.
+It enforces one rule: **numbers are generated, interpretation is written.**
+Anything a reader could check against `results/results.jsonl` — run counts,
+gap tables, ladder rows, the coverage map — lives between `AUTO` markers and
+is rewritten from the results file on every sync. The prose around those
+blocks stays hand-written, because no script can decide what a result means
+or whether it clears the noise bar.
+
+```markdown
+<!-- AUTO:l0-gap-table -->
+...rewritten by book_sync...
+<!-- /AUTO:l0-gap-table -->
+```
+
+A marker with no generator, or a generator with no marker, is a hard error —
+so a block cannot silently stop being maintained. Markers are stripped at
+build time and never reach the published page.
+
+The individual steps, if you need them:
+
+```bash
 python analysis/book_figures.py   # regenerate every figure (light + dark)
 python book/build.py              # markdown -> docs/*.html
 ```

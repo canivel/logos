@@ -93,7 +93,7 @@
     
     <details class="toc">
       <summary>On this page</summary>
-      <ul><li class="toc-l2"><a href="#the-stack-works-end-to-end">The stack works end to end</a></li><li class="toc-l2"><a href="#the-crossover-with-its-noise-floor-measured">The crossover, with its noise floor measured</a></li><li class="toc-l2"><a href="#it-is-a-precision-effect-not-a-learning-rate-artifact">It is a precision effect, not a learning-rate artifact</a></li><li class="toc-l2"><a href="#low-bit-training-barely-notices-a-mistuned-learning-rate">Low-bit training barely notices a mistuned learning rate</a></li><li class="toc-l2"><a href="#at-12m-parameters-every-low-bit-arm-beats-full-precision">At 12M parameters, every low-bit arm beats full precision</a></li><li class="toc-l2"><a href="#what-the-data-cannot-yet-say">What the data cannot yet say</a></li><li class="toc-l2"><a href="#what-to-remember">What to remember</a></li></ul>
+      <ul><li class="toc-l2"><a href="#the-stack-works-end-to-end">The stack works end to end</a></li><li class="toc-l2"><a href="#the-crossover-with-its-noise-floor-measured">The crossover, with its noise floor measured</a></li><li class="toc-l2"><a href="#it-is-a-precision-effect-not-a-learning-rate-artifact">It is a precision effect, not a learning-rate artifact</a></li><li class="toc-l2"><a href="#low-bit-training-barely-notices-a-mistuned-learning-rate">Low-bit training barely notices a mistuned learning rate</a></li><li class="toc-l2"><a href="#at-12m-parameters-every-low-bit-arm-beats-full-precision">At 12M parameters, every low-bit arm beats full precision</a></li><li class="toc-l3"><a href="#and-by-80-tokens-per-parameter-it-has-flipped">And by 80 tokens per parameter it has flipped</a></li><li class="toc-l3"><a href="#what-has-actually-been-measured">What has actually been measured</a></li><li class="toc-l2"><a href="#what-the-data-cannot-yet-say">What the data cannot yet say</a></li><li class="toc-l2"><a href="#what-to-remember">What to remember</a></li></ul>
     </details>
     
     <article class="prose">
@@ -106,7 +106,8 @@
 <p>Five models, identical in every respect except the precision of their linear layers, trained on the text of <em>Frankenstein</em> with byte-level tokens. All five learned. All five exported to packed artifacts that reloaded to bitwise-identical quantized values. The ternary model's body packed to 1.36 MB against full precision's 9.77 MB — the 7.2× ratio you would predict from 16 bits versus 1.58, arrived at by measuring real packed bytes rather than dividing.</p>
 <p>That run proved nothing about scaling laws. It proved the pipeline does not lie, which is the precondition for everything after it.</p>
 <h2 id="the-crossover-with-its-noise-floor-measured">The crossover, with its noise floor measured<a class="anchor" href="#the-crossover-with-its-noise-floor-measured" aria-label="Link to this section">#</a></h2>
-<p>The first real experiment used 28 runs at 3M and 6M parameters on FineWeb-Edu, comparing ternary against full precision at three training durations, with three seeds at 3M and two at 6M so run-to-run noise could be measured rather than assumed.</p>
+<p>The first real experiment used 28 runs at 3M and 6M parameters on FineWeb-Edu, comparing ternary against full precision at three training durations, with three seeds at 3M and two at 6M so run-to-run noise could be measured rather than assumed. Later runs extend the same comparison up the ladder; the table below is regenerated from the results file every time this book is rebuilt, so it always shows every cell measured to date.</p>
+
 <table>
 <thead>
 <tr>
@@ -172,15 +173,36 @@
   <td style="text-align:right">1.1716</td>
   <td style="text-align:right">+0.2319</td>
   <td style="text-align:right">one seed only</td>
-  <td>bf16 better</td>
+  <td>bf16 better (unbarred)</td>
+</tr>
+<tr>
+  <td>12M</td>
+  <td style="text-align:right">20×</td>
+  <td style="text-align:right">1.5201</td>
+  <td style="text-align:right">1.5982</td>
+  <td style="text-align:right">−0.0781</td>
+  <td style="text-align:right">one seed only</td>
+  <td>ternary better (unbarred)</td>
+</tr>
+<tr>
+  <td>12M</td>
+  <td style="text-align:right">80×</td>
+  <td style="text-align:right">1.3242</td>
+  <td style="text-align:right">1.1766</td>
+  <td style="text-align:right">+0.1476</td>
+  <td style="text-align:right">one seed only</td>
+  <td>bf16 better (unbarred)</td>
 </tr>
 </tbody>
 </table>
+
 <p>Read the 3M row as a story in three acts. Undertrained, ternary wins by more than twice the noise bar. Around 80 tokens per parameter the two are indistinguishable and the honest answer is &quot;we cannot tell&quot;. By 320× full precision wins by four times the bar.</p>
 <figure class="fig"><picture><source srcset="figures/l0-bpb-dark.png" media="(prefers-color-scheme: dark)" class="dark-src"><img src="figures/l0-bpb.png" alt="Validation quality for both arms across training durations, at two model sizes. Faint dots are individual seeds." loading="lazy" data-light="figures/l0-bpb.png" data-dark="figures/l0-bpb-dark.png"></picture><figcaption>Validation quality for both arms across training durations, at two model sizes. Faint dots are individual seeds.</figcaption></figure>
 <p>Two further observations, both of which the fitted law will have to reproduce:</p>
 <p>The deficit <strong>grows without saturating</strong>. From 20× to 320× at 3M, the ternary gap moves −0.069 → +0.018 → +0.241, monotonically, with no sign of flattening. This is the shape reported for post-training quantization by Ouyang and colleagues, now observed for models trained low-bit from scratch.</p>
-<p>The deficit <strong>grows with model size at fixed training duration</strong>. At 80 tokens per parameter, ternary trails by 0.018 at 3M and by 0.168 at 6M. That interaction between size and training duration is exactly where the two candidate functional forms in <a href="14-fitting-the-law.html">Chapter 14</a> disagree, which means the fit will have something real to bite on rather than two equally good answers.</p>
+<p>The deficit also <strong>changes with model size at fixed training duration</strong>, though how is not yet settled. At 80 tokens per parameter, ternary trails by 0.018 at 3M, 0.168 at 6M, and 0.148 at 12M. The jump from 3M to 6M is larger than the noise bar and is real. The step from 6M to 12M goes the other way, but by 0.020 — well inside the 0.131 bar of the 6M cell — so it is not a decline, and it is not a continued rise either. The honest reading is that the deficit grows sharply somewhere below 6M and is flat within noise from there to 12M, and that resolving it needs more seeds at the larger sizes.</p>
+<aside class="callout callout-aside"><span class="callout-label">Worth knowing</span><div class="callout-body"><p>an earlier draft of this chapter said the deficit &quot;grows with model size&quot;, which was true of the two sizes that existed at the time. The 12M point arrived and did not continue the trend. Nothing was wrong with the measurement; the claim had simply been extrapolated from two points, which is one point too few to see a shape. It is recorded here rather than quietly edited because this is the ordinary way a premature claim dies.</p></div></aside>
+<p>Whichever way it resolves, an interaction between size and training duration is exactly where the two candidate functional forms in <a href="14-fitting-the-law.html">Chapter 14</a> disagree — so the fit will have something real to bite on rather than two equally good answers.</p>
 <h2 id="it-is-a-precision-effect-not-a-learning-rate-artifact">It is a precision effect, not a learning-rate artifact<a class="anchor" href="#it-is-a-precision-effect-not-a-learning-rate-artifact" aria-label="Link to this section">#</a></h2>
 <p>Ternary arms run at twice the learning rate of full-precision arms, following the BitNet recipe. That creates an obvious alternative explanation for the 20× result: maybe a higher learning rate helps when you train briefly, and precision has nothing to do with it.</p>
 <p>Twelve control runs settled it by crossing precision against learning rate at the contested cells.</p>
@@ -235,8 +257,9 @@
 <p>The practical reading is the opposite of the folklore. Native low-bit training is often described as delicate. On this evidence it is more forgiving than full precision — you do not have to find the learning rate, you have to stay off a cliff, and the cliff is further away.</p>
 <p>The same probes also produced a warning about method, which <a href="10-designing-a-clean-experiment.html">Chapter 10</a> tells in full: three of the five arms had their best value at an <em>edge</em> of the probe grid, meaning the true optimum was never bracketed. Extra runs are extending the grid before any rule is frozen. A default that was never tested is not a measurement, and it is easy to mistake one for the other.</p>
 <h2 id="at-12m-parameters-every-low-bit-arm-beats-full-precision">At 12M parameters, every low-bit arm beats full precision<a class="anchor" href="#at-12m-parameters-every-low-bit-arm-beats-full-precision" aria-label="Link to this section">#</a></h2>
-<p>The first cell of the wider grid puts all five precisions head to head at 12M parameters and 20 tokens per parameter.</p>
+<p>The wider grid puts all five precisions head to head at 12M parameters. Undertrained, at 20 tokens per parameter:</p>
 <figure class="fig"><picture><source srcset="figures/ladder-12m-dark.png" media="(prefers-color-scheme: dark)" class="dark-src"><img src="figures/ladder-12m.png" alt="All five precisions at 12M parameters and 20 tokens per parameter. Every quantized arm lands below full precision." loading="lazy" data-light="figures/ladder-12m.png" data-dark="figures/ladder-12m-dark.png"></picture><figcaption>All five precisions at 12M parameters and 20 tokens per parameter. Every quantized arm lands below full precision.</figcaption></figure>
+
 <table>
 <thead>
 <tr>
@@ -273,8 +296,70 @@
 </tr>
 </tbody>
 </table>
+
 <p>Every quantized arm beats full precision, by margins of 0.078 to 0.104 bits per byte. The crossover seen for ternary at 3M and 6M is not a ternary quirk — it is a property of low-bit training in the undertrained regime, visible across the ladder.</p>
 <p>The ordering <em>among</em> the quantized arms is a different matter. These are single-seed runs, and the spread from best to worst quantized arm is 0.026 bits per byte — far inside the noise bar for a single seed at this size. So: no claim. 2-bit is not &quot;the best precision at 12M&quot; on this evidence, and treating that ordering as a finding would be exactly the error the 2σ rule exists to prevent.</p>
+<h3 id="and-by-80-tokens-per-parameter-it-has-flipped">And by 80 tokens per parameter it has flipped<a class="anchor" href="#and-by-80-tokens-per-parameter-it-has-flipped" aria-label="Link to this section">#</a></h3>
+<p>The same five configurations, trained four times as long, are filling in now:</p>
+
+<table>
+<thead>
+<tr>
+  <th>Arm</th>
+  <th style="text-align:right">Validation BPB</th>
+  <th style="text-align:right">vs bf16</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>bf16</td>
+  <td style="text-align:right">1.1766</td>
+  <td style="text-align:right">—</td>
+</tr>
+<tr>
+  <td>ternary</td>
+  <td style="text-align:right">1.3242</td>
+  <td style="text-align:right">+0.148</td>
+</tr>
+</tbody>
+</table>
+
+<p>Ternary, which was 0.078 <em>ahead</em> of full precision at 20 tokens per parameter, is 0.148 behind it at 80×. The sign change that appeared at 3M and again at 6M reproduces at 12M — the third size in a row, and the clearest statement so far that the answer to &quot;which precision should I use?&quot; is not a constant but a function of how long you train.</p>
+<p>What the remaining arms will settle is more interesting than the ternary result itself. If 2-bit, 3-bit and 4-bit all cross at the same point, precision affects only <em>how much</em> you lose, and the crossover is a property of low-bit training in general. If they cross in bit order — coarser precisions flipping first, finer ones holding out longer — then the crossover <em>location</em> depends on bit width, and the fitted law has a genuine surface to reproduce rather than a single boundary. <a href="14-fitting-the-law.html">Chapter 14</a> explains why the two candidate functional forms make different predictions here.</p>
+<h3 id="what-has-actually-been-measured">What has actually been measured<a class="anchor" href="#what-has-actually-been-measured" aria-label="Link to this section">#</a></h3>
+<p>Because this chapter is written while the grid is still running, here is the honest coverage map — how many precision arms exist at each size and training duration. Empty cells are not results; they are runs that have not happened.</p>
+
+<table>
+<thead>
+<tr>
+  <th>Size</th>
+  <th>20×</th>
+  <th>80×</th>
+  <th>320×</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>3M</td>
+  <td>2 arms</td>
+  <td>2 arms</td>
+  <td>2 arms</td>
+</tr>
+<tr>
+  <td>6M</td>
+  <td>2 arms</td>
+  <td>2 arms</td>
+  <td>2 arms</td>
+</tr>
+<tr>
+  <td>12M</td>
+  <td>5 arms</td>
+  <td>2 arms</td>
+  <td>—</td>
+</tr>
+</tbody>
+</table>
+
 <h2 id="what-the-data-cannot-yet-say">What the data cannot yet say<a class="anchor" href="#what-the-data-cannot-yet-say" aria-label="Link to this section">#</a></h2>
 <p>Being clear about the boundary matters as much as reporting the results.</p>
 <p><strong>There is no fitted law yet.</strong> The grid is still running. Nothing in this chapter tells you where the crossover sits for a 1-billion-parameter model or a 2 GB budget; extrapolating from six cells would be guessing with extra steps.</p>

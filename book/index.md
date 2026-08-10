@@ -11,7 +11,9 @@ This project takes the other road: train the model in low precision **from the b
 > **Given a fixed number of bytes at inference time, how should you spend them?** More parameters at fewer bits each, or fewer parameters at higher precision? How long should you train? How much of the budget should the attention cache take?
 
 <div class="statrow">
-<div class="stat"><b>68</b><span>training runs completed so far</span></div>
+<div class="stat"><b><!-- AUTO:run-count -->
+70
+<!-- /AUTO:run-count --></b><span>training runs completed so far</span></div>
 <div class="stat"><b>1</b><span>consumer GPU doing the work</span></div>
 <div class="stat"><b>≤$100</b><span>total cloud budget</span></div>
 <div class="stat"><b>49</b><span>pre-registered verification gates</span></div>

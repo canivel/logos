@@ -142,7 +142,13 @@ MANUAL_CAPTION_RE = re.compile(
 CAPTION_PREFIX_RE = re.compile(r"^Figure\s*(<code>[^<]*</code>|[\d.]+)?\s*[:—-]\s*")
 
 
+# analysis/book_sync.py delimits generated blocks with these; they are
+# bookkeeping for the sync tool, not something to ship in the page source.
+AUTO_MARKER_RE = re.compile(r"[ \t]*<!-- /?AUTO:[a-z0-9-]+ -->\n?")
+
+
 def fold_manual_captions(html_text: str) -> str:
+    html_text = AUTO_MARKER_RE.sub("", html_text)
     html_text = FIG_IN_P_RE.sub(r"\1", html_text)
 
     def sub(m):
