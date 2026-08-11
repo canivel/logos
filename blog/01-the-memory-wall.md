@@ -1,6 +1,6 @@
 ---
 platform: Substack
-status: DRAFT — ready to paste
+status: READY TO PUBLISH
 title: everyone is worried about GPUs. the real shortage is memory
 subtitle: so i started training language models at 1.58 bits per weight on a gaming GPU. 73 runs in, here is what i found and the one thing i cant claim yet
 tags: machine learning, LLMs, quantization, research
@@ -12,19 +12,19 @@ tags: machine learning, LLMs, quantization, research
 
 ---
 
-![A cartoon graphics card buckling under an enormous sack of memory sticks strapped to its back, with more sticks spilling out and scattering across the floor behind it.](figures/image.png)
+![A cartoon graphics card buckling under an enormous sack of memory sticks strapped to its back, with more sticks spilling out and scattering across the floor behind it.](figures/illus-hero.png)
 
 ---
 
 everybody is talking about the GPU shortage. i think that is already the old story.
 
-look at where the money actually went in 2026. the big five are putting something like 600 to 630 billion into capex, and memory went from around 8% of that spend in 2023 and 2024 to about 30% now. datacenters are absorbing roughly 70% of the worlds memory output. server DRAM contract prices moved 60 to 90% in a single quarter. bit supply is growing about 16% against demand that would eat all of it.
+look at where the money actually went in 2026. the big five are putting something like 600 to 630 billion into capex, and memory went from around 8% of that spend in 2023 and 2024 to about 30% now. datacenters are absorbing roughly 70% of the world's memory output. server DRAM contract prices moved 60 to 90% in a single quarter. bit supply is growing about 16% against demand that would eat all of it.
 
 when it normalizes depends who you ask. Intel says 2028. SK Hynix has said it could run past 2030.
 
-> **[CHART — upload `blog/figures/memory-wall.png`]**
->
-> *Caption: memory went from about 8% of hyperscaler infrastructure spend to about 30% in two years.*
+![Memory as a share of hyperscaler infrastructure spending, 2023 to 2024 against 2026.](figures/memory-wall.png)
+
+*memory went from about 8% of hyperscaler infrastructure spend to about 30% in two years*
 
 so the constraint moved. it is not how many FLOPs you can buy anymore, it is how many bytes you can hold. and that changes what question you should be asking about your model.
 
@@ -34,7 +34,7 @@ what does everyone do when a model doesnt fit? train it in 16 bit, then quantize
 
 it works. i use it. but i dont think it is the real answer, for three reasons.
 
-first, it falls apart right where the savings get interesting. post training quantization holds up fine at 8 bits, usually fine at 4, and then degrades fast below that. the regime where you actually get a 8x or 10x reduction is the regime it cant reach.
+first, it falls apart right where the savings get interesting. post training quantization holds up fine at 8 bits, usually fine at 4, and then degrades fast below that. the regime where you actually get an 8x or 10x reduction is the regime it cant reach.
 
 second, it changes nothing about training. you still paid the full precision memory bill to train the thing. compressing the artifact afterwards does not touch the economics of producing it.
 
@@ -56,11 +56,7 @@ the intuition is simple enough. at a fixed byte budget, going from 16 bit to ter
 
 ---
 
-> **[IMAGE 2 — the trade]**
->
-> **Prompt:** *Clean minimalist diagram illustration, 16:9. A balance scale. On the left pan, a large dense cluster of many tiny identical dots. On the right pan, a small number of large solid circles. The scale is almost balanced but tipping slightly. Flat vector style, two colors only (deep blue and warm orange) on off-white, thin lines, generous white space. No text labels, no numbers, no faces.*
->
-> *Alt text: a balance scale weighing many small dots against a few large circles.*
+![a balance scale weighing many small dots against a few large circles.](figures/illus-tradeoff.png)
 
 ---
 
@@ -93,15 +89,10 @@ so the answer to "which precision should i use" is not a constant. it is a cross
 
 i have now reproduced this at 3M, 6M and 12M parameters. at 12M and 20 tokens/param, all four quantized arms beat full precision.
 
----
+![Quality gap between ternary and 16-bit weights against training tokens per parameter, at 3M, 6M and 12M parameters, with two-sigma error bars.](figures/crossover.png)
 
-> **[IMAGE 3 — the crossover]**
->
-> **Prompt:** *Minimal editorial line chart illustration, 16:9. Two smooth lines on a light background crossing each other once, left to right. One line starts low and rises, the other starts high and falls, they intersect near the middle. A soft vertical band marks the crossing region. Flat design, deep blue and warm orange, thin clean strokes, no axis numbers, no text, no gridlines beyond one faint horizontal baseline. Generous margins.*
->
-> *Alt text: two lines crossing once, marking where the ordering reverses.*
+*below zero means ternary is winning. the bars are two sigma of measured run to run noise, so anything crossing zero is not a claim*
 
----
 
 ## the part i cant claim
 
@@ -115,6 +106,10 @@ last week the 12M row at 80 tokens per parameter finished with all five precisio
 • ternary: +0.148
 
 perfectly ordered by bit width. and look at the spacing. from 4 bit to 3 bit is 0.009. from 3 bit to 2 bit is 0.059. more than six times bigger. the arms group into two clusters instead of sliding smoothly.
+
+![Quality lost against 16-bit for 4-bit, 3-bit, 2-bit and ternary weights at 12M parameters, with the whole effect and the measured noise bar drawn to the same scale.](figures/bit-regime.png)
+
+*the two arrows on the right are the whole effect and my measured noise bar, at the same scale. that is the reason i am not claiming any of it*
 
 that shape has a name already. ParetoQ described a transition between a reconstruction regime at 3 bits and up, where the model can still approximate the weights full precision would have found, and a compensation regime at 2 bits and below where it has to find a genuinely different solution. they saw it quantizing trained models. this looks like the same boundary showing up in models trained low bit from step one.
 
@@ -144,17 +139,17 @@ quick one that surprised me. i ran 15 learning rate probes across all five preci
 
 over a 4x range of learning rates, full precision moved 0.191 bits per byte. ternary and 2 bit moved 0.034. so quantized training is 5 to 6 times less sensitive to getting the learning rate wrong.
 
+![Validation bits per byte against learning-rate multiplier for five weight precisions at 6M parameters.](figures/lr-sensitivity.png)
+
+*bf16 is the steep one. the quantized arms are nearly flat across the same range*
+
 makes sense once you think about what a quantizer is. it is a projection. a bigger optimizer step moves the master weight further, but unless it crosses a rounding boundary the effective weight the model actually uses does not change at all. the quantizer absorbs most of your mistake.
 
 people describe native low bit training as delicate. on my numbers it is more forgiving than bf16. you dont have to find the learning rate, you have to avoid the cliff, and the cliff is further away. [chapter 7](https://canivel.github.io/logos/07-training-in-low-precision.html) covers the mechanics of how any of this trains at all, since rounding has a zero gradient and by rights should stop learning dead.
 
 ---
 
-> **[IMAGE 4 — the desk]**
->
-> **Prompt:** *Warm minimal illustration, 16:9. A single desk at night lit by one lamp, a computer tower with a soft glow from inside, a window showing a dark city skyline with a few distant datacenter buildings lit up on the horizon. Emphasis on the contrast between the one small lit desk in the foreground and the enormous facilities far away. Muted palette, deep blue night tones with one warm amber light source. Flat illustration style, no people, no text, no brand marks.*
->
-> *Alt text: one lit desk in the foreground, distant datacenters on the horizon.*
+![one lit desk in the foreground, distant datacenters on the horizon.](figures/illus-desk.png)
 
 ---
 
@@ -174,4 +169,4 @@ if you want the whole thing properly, start here: **[canivel.github.io/logos](ht
 
 code, data, every result: **[github.com/canivel/logos](https://github.com/canivel/logos)**
 
-i will post again when the law is fitted and the prediction gets scored, either way it goes.
+i will post again when the law is fitted and the prediction gets scored, whichever way it goes.
