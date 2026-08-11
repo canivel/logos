@@ -317,6 +317,11 @@
   <td style="text-align:right">—</td>
 </tr>
 <tr>
+  <td>4-bit</td>
+  <td style="text-align:right">1.2157</td>
+  <td style="text-align:right">+0.039</td>
+</tr>
+<tr>
   <td>3-bit</td>
   <td style="text-align:right">1.2242</td>
   <td style="text-align:right">+0.048</td>
@@ -335,9 +340,44 @@
 </table>
 
 <p>Ternary, which was 0.078 <em>ahead</em> of full precision at 20 tokens per parameter, is 0.148 behind it at 80×. The sign change that appeared at 3M and again at 6M reproduces at 12M — the third size in a row, and the clearest statement so far that the answer to &quot;which precision should I use?&quot; is not a constant but a function of how long you train.</p>
-<p>The arms landing after it fall in a suggestive order. Ternary trails by 0.148, 2-bit by 0.107, 3-bit by 0.048 — each additional bit costing less, and the sequence monotone in bit width so far. If 4-bit continues it, the penalty for overtraining a low-bit model is <em>graded</em> by precision rather than uniform, which would mean each bit width has its own crossover point rather than all of them sharing one. That is a surface for the fitted law to reproduce, not a single boundary, and <a href="14-fitting-the-law.html">Chapter 14</a> explains why the two candidate functional forms disagree about its shape.</p>
-<p>Two reasons not to bank on it yet. These are single-seed runs, and the entire spread from 3-bit to ternary is 0.100 bits per byte — comparable to the 0.131 noise bar measured at the size below, so on the project's own 2σ rule not one of the individual gaps is claimable. Seeds at 12M would be needed, and they are not in the current manifest.</p>
-<p>The stronger reason for caution is that <strong>the same ordering does not appear at 20 tokens per parameter</strong>. In the undertrained row the arms rank 2-bit, 4-bit, 3-bit, ternary — not monotone in bit width at all. So either the ordering genuinely emerges only once models are trained past the point where low precision helps, which would be an interesting result about <em>when</em> precision starts to matter, or the 20× ordering is noise, or the 80× ordering is. Three single-seed rows cannot distinguish those, and pretending otherwise is exactly the failure this chapter keeps warning about.</p>
+<p>With all five arms in, the row is ordered perfectly by bit width — and, more interestingly, it is not evenly spaced.</p>
+<table>
+<thead>
+<tr>
+  <th>Arm</th>
+  <th style="text-align:right">Deficit vs bf16</th>
+  <th style="text-align:right">Step from the arm above</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>4-bit</td>
+  <td style="text-align:right">+0.039</td>
+  <td style="text-align:right">—</td>
+</tr>
+<tr>
+  <td>3-bit</td>
+  <td style="text-align:right">+0.048</td>
+  <td style="text-align:right">+0.009</td>
+</tr>
+<tr>
+  <td>2-bit</td>
+  <td style="text-align:right">+0.107</td>
+  <td style="text-align:right"><strong>+0.059</strong></td>
+</tr>
+<tr>
+  <td>ternary</td>
+  <td style="text-align:right">+0.148</td>
+  <td style="text-align:right">+0.041</td>
+</tr>
+</tbody>
+</table>
+<p>Four-bit and three-bit sit almost on top of each other. Then there is a step more than six times larger, and two-bit and ternary sit well below. The arms fall into two groups rather than a smooth gradient.</p>
+<p>That shape has a name in the literature. ParetoQ described a transition between a <strong>reconstruction</strong> regime at three bits and above, where a quantized model can still approximate the weights a full-precision model would have found, and a <strong>compensation</strong> regime at two bits and below, where it has to find a genuinely different solution. They observed it when quantizing trained models. This looks like the same boundary showing up in models trained low-bit from the first step — which, if it holds, says something about the constraint itself rather than about any particular way of applying it.</p>
+<aside class="callout callout-warn"><span class="callout-label">Heads up</span><div class="callout-body"><p>every arm in that table is a single run. The entire spread from 4-bit to ternary is 0.109 bits per byte, against a 0.131 noise bar measured at the size below — so by this project's own rule not one of those gaps is individually claimable, including the 0.059 step the whole story rests on. A perfectly monotone ordering of four arms comes up 1 time in 24 by chance, which is suggestive, but it was noticed <em>after</em> looking, and post-hoc patterns are exactly what a two-sigma rule exists to restrain.</p></div></aside>
+<p>There is also a complication. <strong>The same ordering does not appear at 20 tokens per parameter</strong>, where the arms rank 2-bit, 4-bit, 3-bit, ternary — not monotone at all. Either the structure emerges only once models are trained past the point where low precision helps, which would itself be a finding about when precision starts to matter, or one of the two rows is noise.</p>
+<p>So rather than claim it, the project has registered a prediction. Adding seeds at 12M would cost about 32 GPU-hours and strengthen exactly one cell; the grid already trains this same row at 25M and 60M, so the cheaper and far stronger test is whether the pattern repeats at sizes it was not derived from. Three specific, falsifiable predictions — monotone ordering, the largest step landing between 3-bit and 2-bit, and that step being at least twice the 4-to-3-bit step — were written down and committed with a timestamp before either of those rows began training. They are scored when the rows land, and reported whichever way they go.</p>
+<aside class="callout callout-matters"><span class="callout-label">Why this matters</span><div class="callout-body"><p>this is the whole method in one episode. A striking pattern appeared, it matched a published result, and it was inside the noise. The options were to claim it, to spend a day of compute shoring up one cell, or to write down in advance exactly what would have to be true and let runs that were already scheduled decide. Only the third costs nothing and can actually be wrong.</p></div></aside>
 <h3 id="what-has-actually-been-measured">What has actually been measured<a class="anchor" href="#what-has-actually-been-measured" aria-label="Link to this section">#</a></h3>
 <p>Because this chapter is written while the grid is still running, here is the honest coverage map — how many precision arms exist at each size and training duration. Empty cells are not results; they are runs that have not happened.</p>
 
@@ -366,7 +406,7 @@
 <tr>
   <td>12M</td>
   <td>5 arms</td>
-  <td>4 arms</td>
+  <td>5 arms</td>
   <td>—</td>
 </tr>
 </tbody>

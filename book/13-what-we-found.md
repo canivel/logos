@@ -104,6 +104,7 @@ The same five configurations, trained four times as long, are filling in now:
 | Arm | Validation BPB | vs bf16 |
 |-----|---------------:|--------:|
 | bf16 | 1.1766 | — |
+| 4-bit | 1.2157 | +0.039 |
 | 3-bit | 1.2242 | +0.048 |
 | 2-bit | 1.2832 | +0.107 |
 | ternary | 1.3242 | +0.148 |
@@ -111,11 +112,26 @@ The same five configurations, trained four times as long, are filling in now:
 
 Ternary, which was 0.078 *ahead* of full precision at 20 tokens per parameter, is 0.148 behind it at 80×. The sign change that appeared at 3M and again at 6M reproduces at 12M — the third size in a row, and the clearest statement so far that the answer to "which precision should I use?" is not a constant but a function of how long you train.
 
-The arms landing after it fall in a suggestive order. Ternary trails by 0.148, 2-bit by 0.107, 3-bit by 0.048 — each additional bit costing less, and the sequence monotone in bit width so far. If 4-bit continues it, the penalty for overtraining a low-bit model is *graded* by precision rather than uniform, which would mean each bit width has its own crossover point rather than all of them sharing one. That is a surface for the fitted law to reproduce, not a single boundary, and [Chapter 14](14-fitting-the-law.md) explains why the two candidate functional forms disagree about its shape.
+With all five arms in, the row is ordered perfectly by bit width — and, more interestingly, it is not evenly spaced.
 
-Two reasons not to bank on it yet. These are single-seed runs, and the entire spread from 3-bit to ternary is 0.100 bits per byte — comparable to the 0.131 noise bar measured at the size below, so on the project's own 2σ rule not one of the individual gaps is claimable. Seeds at 12M would be needed, and they are not in the current manifest.
+| Arm | Deficit vs bf16 | Step from the arm above |
+|-----|----------------:|------------------------:|
+| 4-bit | +0.039 | — |
+| 3-bit | +0.048 | +0.009 |
+| 2-bit | +0.107 | **+0.059** |
+| ternary | +0.148 | +0.041 |
 
-The stronger reason for caution is that **the same ordering does not appear at 20 tokens per parameter**. In the undertrained row the arms rank 2-bit, 4-bit, 3-bit, ternary — not monotone in bit width at all. So either the ordering genuinely emerges only once models are trained past the point where low precision helps, which would be an interesting result about *when* precision starts to matter, or the 20× ordering is noise, or the 80× ordering is. Three single-seed rows cannot distinguish those, and pretending otherwise is exactly the failure this chapter keeps warning about.
+Four-bit and three-bit sit almost on top of each other. Then there is a step more than six times larger, and two-bit and ternary sit well below. The arms fall into two groups rather than a smooth gradient.
+
+That shape has a name in the literature. ParetoQ described a transition between a **reconstruction** regime at three bits and above, where a quantized model can still approximate the weights a full-precision model would have found, and a **compensation** regime at two bits and below, where it has to find a genuinely different solution. They observed it when quantizing trained models. This looks like the same boundary showing up in models trained low-bit from the first step — which, if it holds, says something about the constraint itself rather than about any particular way of applying it.
+
+> **Heads up:** every arm in that table is a single run. The entire spread from 4-bit to ternary is 0.109 bits per byte, against a 0.131 noise bar measured at the size below — so by this project's own rule not one of those gaps is individually claimable, including the 0.059 step the whole story rests on. A perfectly monotone ordering of four arms comes up 1 time in 24 by chance, which is suggestive, but it was noticed *after* looking, and post-hoc patterns are exactly what a two-sigma rule exists to restrain.
+
+There is also a complication. **The same ordering does not appear at 20 tokens per parameter**, where the arms rank 2-bit, 4-bit, 3-bit, ternary — not monotone at all. Either the structure emerges only once models are trained past the point where low precision helps, which would itself be a finding about when precision starts to matter, or one of the two rows is noise.
+
+So rather than claim it, the project has registered a prediction. Adding seeds at 12M would cost about 32 GPU-hours and strengthen exactly one cell; the grid already trains this same row at 25M and 60M, so the cheaper and far stronger test is whether the pattern repeats at sizes it was not derived from. Three specific, falsifiable predictions — monotone ordering, the largest step landing between 3-bit and 2-bit, and that step being at least twice the 4-to-3-bit step — were written down and committed with a timestamp before either of those rows began training. They are scored when the rows land, and reported whichever way they go.
+
+> **Why this matters:** this is the whole method in one episode. A striking pattern appeared, it matched a published result, and it was inside the noise. The options were to claim it, to spend a day of compute shoring up one cell, or to write down in advance exactly what would have to be true and let runs that were already scheduled decide. Only the third costs nothing and can actually be wrong.
 
 ### What has actually been measured
 
@@ -126,7 +142,7 @@ Because this chapter is written while the grid is still running, here is the hon
 |------|-----|-----|------|
 | 3M | 2 arms | 2 arms | 2 arms |
 | 6M | 2 arms | 2 arms | 2 arms |
-| 12M | 5 arms | 4 arms | — |
+| 12M | 5 arms | 5 arms | — |
 <!-- /AUTO:coverage -->
 
 ## What the data cannot yet say

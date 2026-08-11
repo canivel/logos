@@ -12,7 +12,7 @@ This project takes the other road: train the model in low precision **from the b
 
 <div class="statrow">
 <div class="stat"><b><!-- AUTO:run-count -->
-72
+73
 <!-- /AUTO:run-count --></b><span>training runs completed so far</span></div>
 <div class="stat"><b>1</b><span>consumer GPU doing the work</span></div>
 <div class="stat"><b>≤$100</b><span>total cloud budget</span></div>
