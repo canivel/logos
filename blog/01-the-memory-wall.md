@@ -152,6 +152,26 @@ People describe native low bit training as delicate. On my numbers it is more fo
 
 ---
 
+## What I actually want out of this
+
+Underneath all of it there is one number I am trying to measure, and it does not exist yet for models trained low bit from the start.
+
+Call it the effective capacity of a parameter. If you store a weight in 1.58 bits instead of 16, how much of its usefulness survives? Half? A fifth? Nobody has measured it properly, and the whole field is making deployment decisions as if the answer were obvious.
+
+Here is why it is not obvious. At a fixed byte budget, ternary buys you about ten times more parameters. So on pure arithmetic, ternary wins unless a ternary parameter is worth less than a tenth of a full precision one. Ten percent. That is a very low bar, and by that logic low precision should win essentially always.
+
+Except it does not. My own numbers show ternary losing badly at 320 tokens per parameter. So the simple capacity story is incomplete, and what is missing is training. How long you train changes what a parameter is worth at a given precision, and that interaction is the thing I am actually chasing.
+
+Get that right and you can write down a rule. Tell me your byte budget and how long you intend to train, and the rule tells you how many parameters at how many bits. That is the same kind of answer Chinchilla gives for compute, for a different and more practical constraint.
+
+**It would change what people build.** Chinchilla moved the entire field within months, not because the mathematics was elegant but because it told everyone what to train. Right now, if you have 2GB and want the best model that fits in it, there is no principled answer. You take a model that already exists, quantize it, and hope. A memory optimal rule replaces hoping with arithmetic.
+
+**It would change what runs on hardware people own.** If more parameters at fewer bits genuinely wins at a phone sized budget, then the model on your phone is not a sad compromise version of a real model. It is the right design for that budget, and it is better than anything you get by squeezing something bigger.
+
+**It would change the bill.** Memory is about 30% of hyperscaler capex and climbing. A rule that gets the same quality out of meaningfully fewer bytes is worth real money at that scale, and it is the difference between viable and impossible at the small end.
+
+**And if it goes the other way, that is worth knowing too.** If full precision turns out to win per byte across the board, the honest conclusion is that native low bit training does not pay for itself and people should stop spending time on it. I would rather publish that than not know.
+
 ## What's next
 
 The grid is still running as I write this. Next up is the extension of the learning rate probes, then the main grid at 25M and 60M, which is where the law actually gets fitted and where my prediction gets scored.

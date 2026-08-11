@@ -118,6 +118,30 @@ Precision scaling laws exist from the **compute** side, relating precision to tr
 
 Each is a piece. Nobody has put total inference footprint, weights plus cache, on the left side of the constraint and asked what allocation maximizes quality for natively-trained low-bit models. That is the sentence LOGOS is trying to be able to write, and it cannot write it yet. The law is not fitted, and there is no released model, no completed cloud anchor, no measured f(b), no real phase diagram. What exists is a validated stack, a frozen protocol, a crossover measured with a proper noise floor at 3M and 6M, a first full-ladder cell at 12M, a learning-rate finding with a known gap in its probe grid, and a grid that is still running.
 
+## What a good answer would be worth
+
+It is easy to read this chapter as an interesting curiosity about bit widths. It is worth being explicit about why the answer would matter, and the cleanest way to see it is to notice that the obvious reasoning gives the wrong answer.
+
+At a fixed byte budget, ternary weights buy roughly ten times more parameters than 16-bit ones. So on capacity arithmetic alone, low precision wins unless a ternary parameter retains less than about a tenth of a full-precision parameter's usefulness. That is a very low bar. By that logic low precision should win essentially always, at every budget, for every model.
+
+It does not. The measurements in [Chapter 13](13-what-we-found.md) show ternary losing decisively once training runs long enough. So effective capacity by itself does not explain the behaviour, and whatever is missing lives in the interaction between precision and training duration. Pinning down that interaction is the actual scientific target of this project, and it is why the law has to have D in it rather than being a simple statement about bits.
+
+> **In plain terms:** the arithmetic says low precision should always win, and experiment says it does not. The gap between those two is the thing worth measuring.
+
+Suppose it works. What follows is a **design rule**: state a byte budget and an intended training duration, and the rule returns a parameter count and a bit width. That is the same shape of output Chinchilla produces for a compute budget, answering a question that binds far more often in practice.
+
+Four things would change.
+
+**What gets built.** Chinchilla reshaped the field within months, not because its mathematics was elegant but because it told practitioners what to train. There is currently no principled answer to "I have 2 GB, what is the best model that fits?" The standard procedure is to take an existing model, quantize it, and hope. A memory-optimal rule replaces hoping with arithmetic.
+
+**What runs on hardware people own.** If more parameters at fewer bits genuinely wins at a phone-sized budget, then an on-device model is not a degraded copy of a real one. It is the correct design for that budget, and better than anything obtained by compressing something larger.
+
+**The economics.** Memory is roughly 30% of hyperscaler infrastructure spending and rising ([Chapter 1](01-the-memory-wall.md)). A rule that delivers equal quality in materially fewer bytes is worth a great deal at that scale, and at the small end it is the difference between a deployment being possible and impossible.
+
+**Who gets to participate.** The same byte scarcity that motivates the research also decides who can afford to do research at all. A method that needs fewer bytes for the same work is an answer to both problems at once.
+
+> **Why this matters:** the negative result is valuable too, and this is not a consolation. If full precision wins per byte across the board, the honest conclusion is that native low-bit training does not pay for itself and the field should stop investing in it. That finding would save more effort than a positive one, and the design of this project — competing forms, blind extrapolation, a noise bar that refuses weak claims — is built to be equally capable of producing it.
+
 ## What to remember
 
 The question is a constrained optimization you can state in one line: minimize loss subject to weight_bytes + kv_bytes ≤ M, choosing parameter count, weight precision, cache precision and training tokens. At its center is a trade between two opposing curves, since dropping from 16 bits to ternary buys about 10× more parameters while each retains only a fraction f(b) of a full-precision one's usefulness, and the product N × f(b) turns over somewhere. Answering it produces two usable artifacts: an iso-memory frontier showing the best achievable loss per bit width at each budget, and a b*(M, D) phase diagram whose color at each point is the precision you should build at. The genuinely novel axis is training duration, since at 3M parameters ternary beats bf16 by 0.0687 BPB at 20 tokens per parameter and loses by 0.2413 at 320×, both beyond their noise bars, so the winner depends on a regime every deployed model sits deep inside. None of this is settled here: the law is not fitted, and the honest status is a running grid and a well-posed question.
