@@ -22,7 +22,7 @@ Two features, neither claimable from single-seed runs:
 
 1. The ordering is **perfectly monotone in bit width**.
 2. The spacing is **not uniform**. The 4-to-3-bit step is 0.009; the
-   3-to-2-bit step is 0.059, roughly six times larger. The arms fall into two
+   3-to-2-bit step is 0.059, more than six times larger. The arms fall into two
    groups — {4, 3} at a mean deficit of 0.043 and {2, 1.58} at 0.127 — with a
    gap of 0.084 between the groups that is larger than the spread within
    either.

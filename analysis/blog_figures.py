@@ -189,9 +189,14 @@ def f_bit_regime():
     # Step labels sit in a clean row near the axis rather than beside the
     # line: the last segment is steep enough that a perpendicular offset
     # collides with the point label above it.
+    # Steps and the total spread are computed from the *displayed* 3-decimal
+    # deficits, not the raw floats. Otherwise a reader who subtracts the two
+    # labels on the chart gets a different answer from the step label between
+    # them, which looks like an error even though both are correctly rounded.
+    shown = [round(v, 3) for v in vals]
     lo_y = min(vals) - 0.022
     for i in range(len(vals) - 1):
-        step = vals[i + 1] - vals[i]
+        step = shown[i + 1] - shown[i]
         mid_x = (xs[i] + xs[i + 1]) / 2
         big = step > 0.03
         ax.text(mid_x, lo_y, f"+{step:.3f}", ha="center", va="center",
@@ -203,7 +208,7 @@ def f_bit_regime():
     # The noise bar drawn to the same scale as the whole effect, so the
     # comparison is visual rather than asserted.
     bar = 0.1313
-    spread = vals[-1] - vals[0]
+    spread = shown[-1] - shown[0]
     base_y = vals[0]
     # Labels sit *below* both arrows, at a shared height, so neither can
     # collide with the ternary point label at the top of the plot.
