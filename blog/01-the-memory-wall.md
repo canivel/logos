@@ -44,7 +44,7 @@ Those are not the same question and they do not have the same answer.
 
 ## So what is the actual question
 
-Chinchilla told us how to split a compute budget between parameters and tokens. Roughly 20 tokens per parameter, and that reshaped how everyone trains.
+[Chinchilla](https://arxiv.org/abs/2203.15556) told us how to split a compute budget between parameters and tokens. Roughly 20 tokens per parameter, and that reshaped how everyone trains.
 
 Nobody published the deployment version of it. That one goes like this:
 
@@ -110,7 +110,7 @@ Perfectly ordered by bit width. And look at the spacing. From 4 bit to 3 bit is 
 
 *The two arrows on the right are the whole effect and my measured noise bar, at the same scale. That is the reason I am not claiming any of it.*
 
-That shape has a name already. ParetoQ described a transition between a reconstruction regime at 3 bits and up, where the model can still approximate the weights full precision would have found, and a compensation regime at 2 bits and below where it has to find a genuinely different solution. They saw it quantizing trained models. This looks like the same boundary showing up in models trained low bit from step one.
+That shape has a name already. [ParetoQ](https://arxiv.org/abs/2502.02631) described a transition between a reconstruction regime at 3 bits and up, where the model can still approximate the weights full precision would have found, and a compensation regime at 2 bits and below where it has to find a genuinely different solution. They saw it quantizing trained models. This looks like the same boundary showing up in models trained low bit from step one.
 
 Nice story. I am not claiming it.
 
