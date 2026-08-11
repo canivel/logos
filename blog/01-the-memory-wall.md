@@ -12,11 +12,7 @@ tags: machine learning, LLMs, quantization, research
 
 ---
 
-> **[IMAGE 1 — hero]**
->
-> **Prompt:** *Editorial illustration, clean and minimal, wide 16:9. A single consumer desktop graphics card sitting on a plain desk, and stacked on top of it a tall precarious tower of memory chips that extends far above the frame. Muted palette, one accent color (deep blue), lots of negative space, soft studio light, subtle paper texture. No text, no logos, no faces. Style of a modern tech magazine cover illustration, not photorealistic, not 3D render.*
->
-> *Alt text: a small graphics card carrying a tower of memory chips far taller than itself.*
+![alt text](figures/image.pnge.png)
 
 ---
 
@@ -25,6 +21,10 @@ everybody is talking about the GPU shortage. i think that is already the old sto
 look at where the money actually went in 2026. the big five are putting something like 600 to 630 billion into capex, and memory went from around 8% of that spend in 2023 and 2024 to about 30% now. datacenters are absorbing roughly 70% of the worlds memory output. server DRAM contract prices moved 60 to 90% in a single quarter. bit supply is growing about 16% against demand that would eat all of it.
 
 when it normalizes depends who you ask. Intel says 2028. SK Hynix has said it could run past 2030.
+
+> **[CHART — upload `blog/figures/memory-wall.png`]**
+>
+> *Caption: memory went from about 8% of hyperscaler infrastructure spend to about 30% in two years.*
 
 so the constraint moved. it is not how many FLOPs you can buy anymore, it is how many bytes you can hold. and that changes what question you should be asking about your model.
 
@@ -95,11 +95,9 @@ i have now reproduced this at 3M, 6M and 12M parameters. at 12M and 20 tokens/pa
 
 ---
 
-> **[IMAGE 3 — the crossover]**
+> **[CHART — upload `blog/figures/crossover.png`]**
 >
-> **Prompt:** *Minimal editorial line chart illustration, 16:9. Two smooth lines on a light background crossing each other once, left to right. One line starts low and rises, the other starts high and falls, they intersect near the middle. A soft vertical band marks the crossing region. Flat design, deep blue and warm orange, thin clean strokes, no axis numbers, no text, no gridlines beyond one faint horizontal baseline. Generous margins.*
->
-> *Alt text: two lines crossing once, marking where the ordering reverses.*
+> *Caption: the same comparison at three model sizes. below zero means ternary is winning. the bars are two sigma of measured run to run noise, so anything crossing zero is not a claim.*
 
 ---
 
@@ -115,6 +113,10 @@ last week the 12M row at 80 tokens per parameter finished with all five precisio
 • ternary: +0.148
 
 perfectly ordered by bit width. and look at the spacing. from 4 bit to 3 bit is 0.009. from 3 bit to 2 bit is 0.059. six times bigger. the arms group into two clusters instead of sliding smoothly.
+
+> **[CHART — upload `blog/figures/bit-regime.png`]**
+>
+> *Caption: the step between 3 bit and 2 bit is six times the step between 4 bit and 3 bit. the two arrows on the right are the whole effect and my measured noise bar, drawn to the same scale.*
 
 that shape has a name already. ParetoQ described a transition between a reconstruction regime at 3 bits and up, where the model can still approximate the weights full precision would have found, and a compensation regime at 2 bits and below where it has to find a genuinely different solution. they saw it quantizing trained models. this looks like the same boundary showing up in models trained low bit from step one.
 
@@ -143,6 +145,10 @@ i also had to retract one of my own claims already. i had written that the low b
 quick one that surprised me. i ran 15 learning rate probes across all five precisions.
 
 over a 4x range of learning rates, full precision moved 0.191 bits per byte. ternary and 2 bit moved 0.034. so quantized training is 5 to 6 times less sensitive to getting the learning rate wrong.
+
+> **[CHART — upload `blog/figures/lr-sensitivity.png`]**
+>
+> *Caption: bf16 is the steep one. the quantized arms are nearly flat across the same range.*
 
 makes sense once you think about what a quantizer is. it is a projection. a bigger optimizer step moves the master weight further, but unless it crosses a rounding boundary the effective weight the model actually uses does not change at all. the quantizer absorbs most of your mistake.
 
