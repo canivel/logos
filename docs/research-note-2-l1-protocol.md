@@ -68,10 +68,30 @@ bf16: 1.0    # significantly hurt at 4x; bracketed from below by l1lrx
 "1.58": 2.0  # confirmed significant vs 1x by the l1ctl controls
 ```
 
-## §2 — FFN ablation (pending)
+## §2 — FFN ablation: no measurable difference, SwiGLU frozen
 
-*SwiGLU vs squared-ReLU at 12M ternary, 20× and 80×; winner frozen for
-every arm.*
+SwiGLU (the plan's default) against squared-ReLU, 12M ternary, one seed each:
+
+| tokens/param | SwiGLU | squared-ReLU | difference | nominal winner |
+|--------------|-------:|-------------:|-----------:|----------------|
+| 20× | 1.5201 | 1.5102 | −0.0099 | squared-ReLU |
+| 80× | 1.3242 | 1.3454 | +0.0212 | SwiGLU |
+
+Both differences sit far inside the 0.1469 BPB significance bar for two
+single-seed runs (2σ√2, σ = 0.0519 measured at 6M), and — more tellingly —
+**they point in opposite directions**. A nonlinearity that were genuinely
+better would not swap sign between two training durations of the same model
+at the same size.
+
+**Decision: SwiGLU, frozen for every arm in the program.** By the standing
+rule (deviate from the prior only on significant evidence) the ablation
+returns no reason to change, so the default stands. This is the cheap,
+boring outcome an ablation is supposed to be allowed to have; the value was
+in checking, not in finding something.
+
+Worth recording that the 20× cell alone would have read as a squared-ReLU
+win to anyone who ran one configuration and stopped. The second cell is what
+turned a spurious result into a non-result.
 
 ## §3 — The gap study (in progress)
 

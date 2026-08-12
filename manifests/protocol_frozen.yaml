@@ -1,0 +1,59 @@
+# Protocol decisions frozen by the L1 phase.
+#
+# Everything here was a free parameter until it was measured, and is fixed
+# for the rest of the program once written down. Each entry records what was
+# decided, on what evidence, and whether the evidence was significant — a
+# decision made because a measurement was inside the noise is still a
+# decision, and pretending otherwise is how a default becomes an unexamined
+# claim (see docs/research-note-2-l1-protocol.md).
+#
+# Changing anything here requires a code commit and a note explaining why.
+
+ffn_type:
+  value: swiglu
+  status: FROZEN
+  decided: 2026-08-12
+  evidence: |
+    12M ternary, SwiGLU vs squared-ReLU, one seed each.
+    20x: 1.5201 vs 1.5102 (squared-ReLU nominally better by 0.0099)
+    80x: 1.3242 vs 1.3454 (SwiGLU nominally better by 0.0212)
+  significance: |
+    Neither difference approaches the 0.1469 BPB bar for two single-seed
+    runs (2*sigma*sqrt(2), sigma = 0.0519 measured at 6M), and the two cells
+    disagree in direction. No evidence to move off the prior.
+  rule_applied: deviate from the prior only on significant evidence
+
+learning_rate_multipliers:
+  status: PROVISIONAL
+  blocked_on: manifests/l1lrx.yaml
+  note: |
+    The {1x, 2x, 4x} probe grid put three of five argmins on an edge, so
+    those optima are unbracketed. The l1lrx runs extend the grid past every
+    edge before this is frozen. Current provisional values live in
+    manifests/lr_rules.yaml; the ternary 2x entry is already confirmed
+    significant by the l1ctl control arms at two sizes and two D/N points.
+
+sequence_length:
+  value: 1024
+  status: FROZEN
+  decided: 2026-08-05
+  evidence: protocol choice, plan v0.3 section 3; applies to local runs and cloud anchors alike
+
+batch_tokens:
+  value: 262144
+  status: FROZEN
+  decided: 2026-08-05
+  evidence: |
+    2^18 tokens per optimizer step on every arm. Gradient accumulation
+    (micro_batch_seqs) adapts to available memory without changing this,
+    asserted by test_grad_accumulation_is_science_neutral.
+
+data_seed:
+  value: 1337
+  status: FROZEN
+  decided: 2026-08-05
+  evidence: |
+    Every arm at a given size consumes byte-identical token streams, so
+    precision is the only difference in what a model experiences. Verified
+    by the data_order probe, which hashes batch streams across arms and
+    across a kill-and-resume.
