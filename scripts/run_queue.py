@@ -100,6 +100,8 @@ def main() -> int:
                     help="grad-accum micro-batch (hardware lever only; 8 fits a 10GB 3080)")
     ap.add_argument("--max-runs", type=int, default=0, help="0 = drain the whole queue")
     ap.add_argument("--wait-for-data", action="store_true")
+    ap.add_argument("--stop-file", default=str(ROOT / "STOP"),
+                    help="if this file exists, finish the current run and stop")
     args = ap.parse_args()
 
     data_dir, runs_dir = Path(args.data_dir), Path(args.runs_dir)
@@ -114,7 +116,14 @@ def main() -> int:
 
     queue = sorted(specs, key=lambda s: (s.est_cost_usd, s.est_gpu_hours))
     launched = 0
+    stop_file = Path(args.stop_file)
     for spec in queue:
+        # Graceful stop: checked between runs, never mid-run, so asking the
+        # queue to stop never wastes the hours already spent on the run in
+        # flight. Delete the file to resume.
+        if stop_file.exists():
+            print(f"stop file present ({stop_file}), finishing here")
+            break
         if spec.run_id in done_ids:
             continue
         if args.max_runs and launched >= args.max_runs:

@@ -24,3 +24,6 @@ uv.lock
 
 # operational logs churn constantly and regenerate; not part of the record
 logs/
+
+# transient stop request, not part of the record
+STOP

@@ -50,7 +50,11 @@ def main() -> int:
         wait_for(Path(args.wait_for))
         print("previous queue drained", flush=True)
 
+    stop_file = ROOT / "STOP"
     for spec in args.queue:
+        if stop_file.exists():
+            print(f"stop file present ({stop_file}), not starting further queues", flush=True)
+            return 0
         manifest, data_dir, runs_dir = spec.split(":", 2)
         name = Path(manifest).stem
         log = ROOT / "logs" / f"{name}_queue.log"
