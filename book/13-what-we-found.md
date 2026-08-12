@@ -142,7 +142,7 @@ Because this chapter is written while the grid is still running, here is the hon
 |------|-----|-----|------|
 | 3M | 2 arms | 2 arms | 2 arms |
 | 6M | 2 arms | 2 arms | 2 arms |
-| 12M | 5 arms | 5 arms | — |
+| 12M | 5 arms | 5 arms | 1 arms |
 <!-- /AUTO:coverage -->
 
 ## What the data cannot yet say
